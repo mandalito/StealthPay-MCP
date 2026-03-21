@@ -120,11 +120,14 @@ export async function registerEnsName(
     args: [commitment],
   });
 
-  await publicClient.waitForTransactionReceipt({
+  const commitReceipt = await publicClient.waitForTransactionReceipt({
     hash: commitTxHash,
     timeout: 120_000,
     pollingInterval: 3_000,
   });
+  if (commitReceipt.status !== 'success') {
+    throw new Error(`Commit transaction reverted: ${commitTxHash}`);
+  }
   onStatus?.(`Commitment tx: ${commitTxHash}`);
 
   // 6. Wait for commitment age
@@ -143,11 +146,16 @@ export async function registerEnsName(
   });
 
   onStatus?.(`Register tx submitted: ${registerTxHash}`);
-  await publicClient.waitForTransactionReceipt({
+  const registerReceipt = await publicClient.waitForTransactionReceipt({
     hash: registerTxHash,
     timeout: 120_000,
     pollingInterval: 3_000,
   });
+  if (registerReceipt.status !== 'success') {
+    throw new Error(
+      `Register transaction reverted: ${registerTxHash}. The ENS name was not registered.`
+    );
+  }
 
   const years = Number(duration) / Number(ONE_YEAR);
 
