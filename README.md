@@ -150,6 +150,11 @@ npx tsx test/ens-e2e.ts
 npx tsx test/register-e2e.ts <label>
 ```
 
+Notes:
+
+- `*.test.ts` files are deterministic Vitest suites.
+- `*-e2e.ts` files are executable integration runners (live-network utilities), not part of default `npm test`.
+
 ### Get Sepolia testnet ETH
 
 1. Go to https://sepoliafaucet.com

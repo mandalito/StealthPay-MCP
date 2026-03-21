@@ -1,5 +1,11 @@
 # Documentation Changelog
 
+## v0.10.0 - 2026-03-21T16:42:27+01:00
+
+- Added dependency evaluation note for ENS MCP and Umbra positioning in MVP architecture.
+- Added test-suite structure note clarifying deterministic `*.test.ts` files vs executable `*-e2e.ts` scripts.
+- Updated docs index with new architecture/testing references.
+
 ## v0.9.0 - 2026-03-21T16:26:50+01:00
 
 - Added MCP endpoint testing coverage report with a full tool-to-test mapping.

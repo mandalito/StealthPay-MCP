@@ -19,6 +19,7 @@ docs/
     mcp-composition.md
     system-overview.md
     privacy-stealth-addresses.md
+    dependency-evaluation.md
   flows/
     agentic-payment-flow.md
     gasless-payment-flow.md
@@ -29,6 +30,7 @@ docs/
     git-sync-workflow.md
   testing/
     mcp-endpoint-coverage-report.md
+    test-suite-structure.md
 ```
 
 ## Current Baseline
