@@ -44,7 +44,23 @@
     "name": "alice.eth",
     "amount": "50",
     "token": "USDC",
-    "chain_id": 8453
+    "chain_id": 8453,
+    "execution_mode": "execute"
+  }
+}
+```
+
+## `send-stealth-payment` (unsigned payload mode)
+
+```json
+{
+  "tool": "send-stealth-payment",
+  "input": {
+    "name": "alice.eth",
+    "amount": "50",
+    "token": "USDC",
+    "chain_id": 8453,
+    "execution_mode": "build_unsigned_tx"
   }
 }
 ```

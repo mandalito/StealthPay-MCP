@@ -11,7 +11,7 @@ Describe how an agent executes a contextual stealth payment with composed MCP se
 3. StealthPay MCP resolves ENS records via ENS MCP.
 4. Agent calls `get-stealth-meta-address(name)`.
 5. Agent calls `generate-stealth-address(name)` with chain/token context.
-6. Agent calls `send-stealth-payment(params)`.
+6. Agent calls `send-stealth-payment(params)` with either `execution_mode=execute` or `execution_mode=build_unsigned_tx`.
 7. StealthPay MCP delegates transaction execution to EVM MCP.
 8. Agent receives tx status and optional payment-link/receipt payload.
 

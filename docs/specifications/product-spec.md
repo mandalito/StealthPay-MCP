@@ -41,6 +41,7 @@ Out of scope (hackathon baseline):
 - support `send-stealth-payment(params)`
 - support `scan-received-payments(keys)`
 - support `create-payment-link(params)`
+- support `send-stealth-payment` in both `execute` and `build_unsigned_tx` modes
 
 ## Non-Functional Requirements
 

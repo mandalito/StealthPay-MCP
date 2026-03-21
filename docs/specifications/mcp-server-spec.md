@@ -63,18 +63,22 @@ Input:
 - `token` (string)
 - `chain_id` (number)
 - `max_slippage_bps` (optional)
+- `execution_mode` (optional: `execute|build_unsigned_tx`, default `execute`)
 
 Output:
 
 - `route_summary`
 - `stealth_address`
-- `tx_hash`
 - `chain_id`
-- `status`
+- `execution_mode`
+- `tx_hash` (present when `execution_mode=execute`)
+- `status` (present when `execution_mode=execute`)
+- `unsigned_tx` (present when `execution_mode=build_unsigned_tx`)
 
 Notes:
 
-- this tool composes `generate-stealth-address` + EVM MCP transaction execution
+- this tool composes `generate-stealth-address` + EVM MCP transaction building/execution
+- in `build_unsigned_tx`, StealthPay MCP returns payload for external signing/broadcast
 
 ### `scan-received-payments`
 
@@ -114,6 +118,7 @@ Output:
 - `STEALTH_META_ADDRESS_NOT_FOUND`
 - `UMBRA_SDK_ERROR`
 - `EVM_EXECUTION_FAILED`
+- `UNSIGNED_BUILD_UNSUPPORTED`
 - `UNSUPPORTED_CHAIN`
 - `INTERNAL_ERROR`
 

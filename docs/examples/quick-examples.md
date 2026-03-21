@@ -32,9 +32,10 @@ Input:
 
 - tool: `send-stealth-payment`
 - params for `alice.eth`, `50` `USDC`, chain Base
+- `execution_mode`: `execute` (or `build_unsigned_tx`)
 
 Expected outcome:
 
 - payment routed using derived stealth destination
-- transaction executed via EVM MCP
-- tx hash and status returned
+- if `execute`: transaction executed via EVM MCP with tx hash/status
+- if `build_unsigned_tx`: unsigned payload returned for external signing/broadcast

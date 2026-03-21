@@ -1,5 +1,11 @@
 # Documentation Changelog
 
+## v0.4.0 - 2026-03-21T12:21:59+01:00
+
+- Updated `send-stealth-payment` spec to support dual execution modes:
+  `execute` and `build_unsigned_tx`.
+- Updated flows and examples to document both execution paths.
+
 ## v0.3.0 - 2026-03-21T12:20:57+01:00
 
 - Added a concrete ENS text-record freeze proposal in `docs/specifications/ens-text-record-keys.md`.
