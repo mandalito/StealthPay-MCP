@@ -1,13 +1,20 @@
-import { createPublicClient, http } from 'viem';
+import { createPublicClient, http, type PublicClient } from 'viem';
 import { mainnet } from 'viem/chains';
 import { normalize } from 'viem/ens';
-import { ERC6538_REGISTRY, ERC6538_REGISTRY_ABI, SCHEME_ID } from '../config.js';
+import { ERC6538_REGISTRY, ERC6538_REGISTRY_ABI, SCHEME_ID, SUPPORTED_CHAINS } from '../config.js';
 
-// ENS resolution always happens on mainnet
-const ensClient = createPublicClient({
-  chain: mainnet,
-  transport: http(process.env.ENS_RPC_URL),
-});
+// ENS resolution defaults to mainnet but can be overridden via ENS_CHAIN env var
+// (e.g. ENS_CHAIN=sepolia for testnet ENS names)
+function getEnsClient(): PublicClient {
+  const chainName = process.env.ENS_CHAIN;
+  const chain = chainName ? SUPPORTED_CHAINS[chainName] ?? mainnet : mainnet;
+  return createPublicClient({
+    chain,
+    transport: http(process.env.ENS_RPC_URL),
+  });
+}
+
+const ensClient = getEnsClient();
 
 export interface PaymentProfile {
   ensName: string;

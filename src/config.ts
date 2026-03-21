@@ -84,6 +84,118 @@ export const ERC20_ABI = [
   },
 ] as const;
 
+// ENS contract addresses per chain (registration + resolver)
+export const ENS_CONTRACTS: Record<string, {
+  controller: `0x${string}`;
+  resolver: `0x${string}`;
+}> = {
+  sepolia: {
+    controller: '0xfb3cE5D01e0f33f41DbB39035dB9745962F1f968',
+    resolver: '0xE99638b40E4Fff0129D56f03b55b6bbC4BBE49b5',
+  },
+  ethereum: {
+    controller: '0x253553366Da8546fC250F225fe3d25d0C782303b',
+    resolver: '0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63',
+  },
+};
+
+// ENS Registrar Controller ABI (struct-based, ENS V3)
+export const ENS_CONTROLLER_ABI = [
+  {
+    name: 'available',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'label', type: 'string' }],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+  {
+    name: 'minCommitmentAge',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'rentPrice',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'label', type: 'string' },
+      { name: 'duration', type: 'uint256' },
+    ],
+    outputs: [{
+      name: 'price',
+      type: 'tuple',
+      components: [
+        { name: 'base', type: 'uint256' },
+        { name: 'premium', type: 'uint256' },
+      ],
+    }],
+  },
+  {
+    name: 'makeCommitment',
+    type: 'function',
+    stateMutability: 'pure',
+    inputs: [{
+      name: 'registration',
+      type: 'tuple',
+      components: [
+        { name: 'label', type: 'string' },
+        { name: 'owner', type: 'address' },
+        { name: 'duration', type: 'uint256' },
+        { name: 'secret', type: 'bytes32' },
+        { name: 'resolver', type: 'address' },
+        { name: 'data', type: 'bytes[]' },
+        { name: 'reverseRecord', type: 'uint8' },
+        { name: 'referrer', type: 'bytes32' },
+      ],
+    }],
+    outputs: [{ name: '', type: 'bytes32' }],
+  },
+  {
+    name: 'commit',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'commitment', type: 'bytes32' }],
+    outputs: [],
+  },
+  {
+    name: 'register',
+    type: 'function',
+    stateMutability: 'payable',
+    inputs: [{
+      name: 'registration',
+      type: 'tuple',
+      components: [
+        { name: 'label', type: 'string' },
+        { name: 'owner', type: 'address' },
+        { name: 'duration', type: 'uint256' },
+        { name: 'secret', type: 'bytes32' },
+        { name: 'resolver', type: 'address' },
+        { name: 'data', type: 'bytes[]' },
+        { name: 'reverseRecord', type: 'uint8' },
+        { name: 'referrer', type: 'bytes32' },
+      ],
+    }],
+    outputs: [],
+  },
+] as const;
+
+// ENS Resolver ABI (minimal — setText for stealth meta-address)
+export const ENS_RESOLVER_ABI = [
+  {
+    name: 'setText',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'node', type: 'bytes32' },
+      { name: 'key', type: 'string' },
+      { name: 'value', type: 'string' },
+    ],
+    outputs: [],
+  },
+] as const;
+
 // ERC-6538 Registry ABI (minimal — just what we need for lookups)
 export const ERC6538_REGISTRY_ABI = [
   {

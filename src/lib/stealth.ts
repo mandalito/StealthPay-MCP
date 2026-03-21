@@ -178,8 +178,8 @@ function parseStealthMetaAddress(metaAddress: string): {
     hex = parts[2];
   }
 
-  // Remove 0x prefix
-  const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
+  // Remove 0x prefix and any whitespace (ENS text records may contain stray spaces)
+  const clean = (hex.startsWith('0x') ? hex.slice(2) : hex).replace(/\s/g, '');
 
   // Each compressed public key is 33 bytes = 66 hex chars
   if (clean.length === 66) {

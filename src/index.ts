@@ -7,11 +7,17 @@ import { registerCreatePaymentLink } from './tools/create-payment-link.js';
 import { registerScanAnnouncements } from './tools/scan-announcements.js';
 import { registerDeriveStealthKey } from './tools/derive-stealth-key.js';
 import { registerWithdrawFromStealth } from './tools/withdraw-from-stealth.js';
+import { registerRegisterEnsName } from './tools/register-ens-name.js';
+import { registerRegisterStealthKeys } from './tools/register-stealth-keys.js';
 
 const server = new McpServer({
   name: 'stealthpay-mcp',
   version: '0.1.0',
 });
+
+// Register all tools — onboarding
+registerRegisterEnsName(server);
+registerRegisterStealthKeys(server);
 
 // Register all tools — sender side
 registerGetPaymentProfile(server);
