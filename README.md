@@ -218,10 +218,19 @@ These scripts are not part of the production server and are not committed.
 
 ## Known limitations
 
-- **Gas for stealth addresses**: Stealth addresses are empty EOAs — the recipient needs ETH for gas to withdraw tokens. Future improvement: ERC-4337 paymaster.
-- **Sepolia stablecoin send path**: `send-stealth-payment` currently uses the `STABLECOINS` config map, which does not yet include Sepolia token addresses.
-- **Hoodi testnet**: Connected but ERC-5564/6538 contracts not yet deployed.
-- **Metadata format**: The scanner assumes the metadata format used by this project. Other ERC-5564 senders may use different layouts.
+- **Token-only stealth account cannot withdraw without native gas**: If a stealth account receives non-native tokens but has `0` native ETH, withdrawal fails until gas is funded. Gasless/paymaster is not in hackathon MVP scope.
+- **Key exposure risk in legacy recipient tools**: `derive-stealth-key` and `withdraw-from-stealth` can expose sensitive key material to the MCP client flow. For safer operations, prefer `claim-stealth-payment`, which keeps recipient keys in local `.env`.
+- **Sepolia stablecoin send path**: `send-stealth-payment` uses the `STABLECOINS` config map; unsupported token addresses require config updates before use.
+- **Hoodi testnet status**: Chain config exists, but production-grade ERC-5564/6538 readiness remains unvalidated for this repo.
+- **Metadata format compatibility**: Scanner parsing assumes this project's metadata conventions; other ERC-5564 senders may encode differently.
+
+## Future improvements
+
+- Add ERC-4337/paymaster withdrawal flow so stealth accounts can move token-only balances without pre-funding native gas.
+- Replace key-exposing recipient flows with strict server-side claim operations only (no secret-bearing tool inputs/outputs).
+- Add `send-stealth-payment` mode for unsigned payload generation (`build_unsigned_tx`) in addition to direct execution.
+- Improve scan performance/reliability with indexed backends (subgraph/indexer) and rate-limit-aware pagination.
+- Complete Umbra SDK integration path where it improves maintainability without breaking current ERC-5564/6538 behavior.
 
 ## License
 

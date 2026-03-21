@@ -1,5 +1,12 @@
 # Documentation Changelog
 
+## v0.11.0 - 2026-03-21T17:15:11+01:00
+
+- Strengthened `AGENT.md` collaboration policy with explicit run-test/commit/push/pull-reconcile workflow and local-only `.local/` handling.
+- Expanded README `Known limitations` and added a dedicated `Future improvements` section (including token-only stealth withdrawal gas constraint).
+- Added `docs/security/private-key-leakage-risk-assessment.md` with current compliance status and remediation backlog.
+- Updated docs index to include the new security assessment.
+
 ## v0.10.0 - 2026-03-21T16:42:27+01:00
 
 - Added dependency evaluation note for ENS MCP and Umbra positioning in MVP architecture.

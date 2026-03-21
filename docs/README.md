@@ -31,6 +31,8 @@ docs/
   testing/
     mcp-endpoint-coverage-report.md
     test-suite-structure.md
+  security/
+    private-key-leakage-risk-assessment.md
 ```
 
 ## Current Baseline
@@ -43,6 +45,10 @@ docs/
 ## Historical Note
 
 `implementation-gap-report.md` captures divergences discovered before this reconciliation pass.
+
+## Security Note
+
+`security/private-key-leakage-risk-assessment.md` tracks current private-key exposure risks and mitigation policy.
 
 ## Documentation Rules
 
