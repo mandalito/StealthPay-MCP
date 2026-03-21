@@ -1,30 +1,49 @@
 # StealthPay MCP
 
-StealthPay MCP is a Model Context Protocol (MCP) server that turns an ENS name into a machine-readable, smart payment endpoint.
+StealthPay MCP is an MCP server that turns an ENS name into a machine-usable, privacy-aware payment endpoint.
 
-It lets agents and apps build contextual crypto payments based on recipient preferences (chain, token, UX options), while improving receiver privacy through stealth addresses.
+It does not reinvent stealth payment primitives. Instead, it orchestrates:
+
+- Umbra Protocol SDK for stealth-address logic
+- ENS MCP for identity and ENS record resolution
+- EVM MCP for transaction execution
 
 ## Problem Statement
 
-Agentic payments in crypto are still weakly contextual:
+Agentic crypto payments are not contextual enough today:
 
-- An agent can know who to pay, but not easily how that recipient prefers to be paid.
-- ENS identity is readable, but does not by itself expose a machine-usable payment profile.
-- Reusing a single public address for many payments increases on-chain correlation and weakens privacy.
+- an agent can know who to pay, but not reliably how the recipient wants to be paid
+- ENS identity is readable, but not sufficient as a complete machine-ready payment profile
+- reusing one public address increases onchain correlation and weakens privacy
 
-StealthPay MCP addresses both dimensions:
+StealthPay MCP solves both sides:
 
-- Smart, preference-aware payment routing from ENS-linked payment metadata.
-- More private fund reception with stealth addresses (Umbra style / ERC-5564 direction).
+- payment routing based on recipient preferences (chain, token, UX constraints)
+- privacy-aware reception using stealth addresses via Umbra-compatible flows
 
-## Core Idea
+## Composed Architecture
 
-Given an ENS name, StealthPay MCP resolves a programmable payment profile and returns a payment plan adapted to context:
+StealthPay MCP sits between AI agents and specialized infrastructure MCPs:
 
-- preferred token and chain
-- fallback options
-- privacy-first reception target
-- optional payment link or gasless flow
+- ENS MCP: read identity + ENS text records
+- StealthPay MCP: resolve preferences + generate stealth payment route
+- EVM MCP: execute transaction and return tx status
+
+Underlying onchain pieces in scope:
+
+- ERC-5564 announcer
+- ERC-6538 registry
+- ENS text records
+- target networks: Ethereum, Base, OP, Arbitrum
+
+## StealthPay MCP Tools (Current Draft)
+
+- `get-stealth-meta-address(name)`
+- `generate-stealth-address(name)`
+- `get-payment-preferences(name)`
+- `create-payment-link(params)`
+- `send-stealth-payment(params)`
+- `scan-received-payments(keys)`
 
 ## Documentation
 
@@ -32,6 +51,7 @@ Given an ENS name, StealthPay MCP resolves a programmable payment profile and re
 - [Product Specification](docs/specifications/product-spec.md)
 - [MCP Server Specification](docs/specifications/mcp-server-spec.md)
 - [Payment Profile Schema](docs/specifications/payment-profile-schema.md)
+- [MCP Composition](docs/architecture/mcp-composition.md)
 - [System Overview](docs/architecture/system-overview.md)
 - [Agentic Payment Flow](docs/flows/agentic-payment-flow.md)
 - [Examples](docs/examples/quick-examples.md)

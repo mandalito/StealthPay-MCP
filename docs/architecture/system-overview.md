@@ -2,30 +2,33 @@
 
 ## High-Level Components
 
-- ENS Resolver Layer
-- Payment Profile Parser/Validator
-- Route Builder (token/chain preference matching)
-- Privacy Adapter (stealth receiver generation/handling)
+- MCP Tool Interface (StealthPay MCP)
+- Preference Resolver (ENS MCP client)
+- Umbra Adapter (Umbra Protocol SDK integration)
+- Route Builder and Payment Orchestrator
+- Transaction Executor (EVM MCP client)
 - Link/Intent Generator
-- MCP Tool Interface
 
-## Data Flow
+## Runtime Flow
 
-1. Client/agent calls MCP tool with ENS and payment context.
-2. Resolver fetches ENS-linked payment metadata.
-3. Parser validates and normalizes profile.
-4. Route builder computes ranked payment routes.
-5. Privacy adapter injects stealth-compatible receiver info.
-6. Server returns structured execution plan (and optional link payload).
-
-## Design Constraints
-
-- Route selection must be explainable and deterministic.
-- Profile parsing failures must produce typed errors.
-- Privacy mode should influence route scoring.
+1. Agent calls StealthPay MCP tool.
+2. StealthPay MCP queries ENS MCP for identity and payment preference records.
+3. StealthPay MCP calls Umbra SDK to resolve/generate stealth addressing data.
+4. Route builder picks token/chain path from preferences and constraints.
+5. StealthPay MCP optionally calls EVM MCP for transaction execution.
+6. Tool returns typed result (address, tx status, link payload, or scan results).
 
 ## Integration Points
 
-- ENS read access
-- stealth addressing primitive (Umbra-like / ERC-5564-based)
-- optional relayer/sponsor stack for gasless flow
+- ENS MCP APIs
+- EVM MCP APIs
+- Umbra Protocol SDK
+- ERC-5564 announcer contracts
+- ERC-6538 registry contracts
+- ENS records
+
+## Design Constraints
+
+- deterministic outputs per tool contract
+- explicit failure origin (ENS MCP vs EVM MCP vs Umbra SDK)
+- no custom stealth cryptography code in MVP

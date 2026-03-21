@@ -1,47 +1,79 @@
 # MCP Tool Usage Examples (Pseudo)
 
-## `resolve_payment_profile`
+## `get-payment-preferences`
 
 ```json
 {
-  "tool": "resolve_payment_profile",
+  "tool": "get-payment-preferences",
   "input": {
-    "ens_name": "alice.eth",
-    "payment_context": {
-      "privacy": "preferred"
-    }
+    "name": "alice.eth"
   }
 }
 ```
 
-## `build_payment_route`
+## `get-stealth-meta-address`
 
 ```json
 {
-  "tool": "build_payment_route",
+  "tool": "get-stealth-meta-address",
   "input": {
-    "ens_name": "alice.eth",
+    "name": "alice.eth"
+  }
+}
+```
+
+## `generate-stealth-address`
+
+```json
+{
+  "tool": "generate-stealth-address",
+  "input": {
+    "name": "alice.eth",
+    "chain_id": 8453,
+    "token": "USDC"
+  }
+}
+```
+
+## `send-stealth-payment`
+
+```json
+{
+  "tool": "send-stealth-payment",
+  "input": {
+    "name": "alice.eth",
     "amount": "50",
-    "asset": "USDC",
-    "constraints": {
-      "allowed_chains": ["base", "ethereum"],
-      "gasless": true
-    }
+    "token": "USDC",
+    "chain_id": 8453
   }
 }
 ```
 
-## `create_payment_link`
+## `scan-received-payments`
 
 ```json
 {
-  "tool": "create_payment_link",
+  "tool": "scan-received-payments",
   "input": {
-    "route_id": "route_123",
-    "expires_in_seconds": 900,
-    "metadata": {
-      "invoice_id": "inv_001"
-    }
+    "keys": {
+      "viewing_key": "0x..."
+    },
+    "chain_ids": [1, 8453, 10, 42161]
+  }
+}
+```
+
+## `create-payment-link`
+
+```json
+{
+  "tool": "create-payment-link",
+  "input": {
+    "name": "alice.eth",
+    "amount": "50",
+    "token": "USDC",
+    "chain_id": 8453,
+    "expires_at": "2026-03-22T12:00:00Z"
   }
 }
 ```

@@ -2,27 +2,29 @@
 
 ## Goal
 
-Describe how an agent performs a contextual payment via StealthPay MCP.
+Describe how an agent executes a contextual stealth payment with composed MCP services.
 
 ## Step-by-Step
 
-1. Agent receives task: pay recipient `name.eth` with amount/context.
-2. Agent calls `resolve_payment_profile`.
-3. MCP server resolves ENS data and returns normalized preferences.
-4. Agent calls `build_payment_route` with amount + constraints.
-5. MCP server returns ranked route and privacy-aware receiver endpoint.
-6. Agent executes selected route via wallet/integration layer.
-7. Agent records outcome and optional receipt metadata.
+1. User asks agent: "Send 50 USDC to alice.eth privately".
+2. Agent calls `get-payment-preferences(name)`.
+3. StealthPay MCP resolves ENS records via ENS MCP.
+4. Agent calls `get-stealth-meta-address(name)`.
+5. Agent calls `generate-stealth-address(name)` with chain/token context.
+6. Agent calls `send-stealth-payment(params)`.
+7. StealthPay MCP delegates transaction execution to EVM MCP.
+8. Agent receives tx status and optional payment-link/receipt payload.
 
 ## Decision Inputs
 
-- recipient chain/token preferences
-- payer constraints (available balance, allowed chains)
+- recipient preferred chains/tokens
+- payer execution constraints
 - privacy mode requirement
-- optional gasless preference
+- network support (Ethereum, Base, OP, Arbitrum)
 
 ## Failure Handling
 
-- no profile: fail with `PROFILE_NOT_FOUND` or fallback policy
-- no route: `NO_COMPATIBLE_ROUTE`
-- stealth unavailable where required: `STEALTH_UNAVAILABLE`
+- ENS lookup failure: `ENS_RESOLUTION_FAILED`
+- no preferences: `PAYMENT_PREFERENCES_NOT_FOUND`
+- no stealth metadata: `STEALTH_META_ADDRESS_NOT_FOUND`
+- tx failure: `EVM_EXECUTION_FAILED`

@@ -2,52 +2,62 @@
 
 ## Objective
 
-Build an MCP server that converts ENS identity into contextual, privacy-aware payment execution hints usable by agents and apps.
+Build StealthPay MCP as a composition/orchestration layer that converts ENS identity into contextual, privacy-aware payment actions for AI agents and apps.
+
+## Product Positioning
+
+StealthPay MCP is not a replacement for ENS MCP or EVM MCP.
+
+- ENS MCP provides identity and record retrieval.
+- EVM MCP provides transaction execution.
+- StealthPay MCP provides payment intent interpretation, preference resolution, and Umbra-SDK-backed privacy routing.
 
 ## Scope
 
 In scope:
 
-- ENS-based payment profile discovery
-- token and chain preference resolution
-- private receiver addressing strategy (stealth)
-- payment link generation and optional gasless-compatible flow descriptions
+- ENS-based payment preference resolution
+- stealth address generation and scanning via Umbra Protocol SDK
+- payment link creation for app/agent handoff
+- transaction orchestration via EVM MCP
 
-Out of scope (for hackathon baseline):
+Out of scope (hackathon baseline):
 
-- full wallet UI implementation
-- exhaustive chain coverage
-- full production compliance and audits
+- custom stealth cryptography implementation
+- full wallet UI product
+- production-grade multi-chain operations at scale
 
 ## Personas
 
-- Payer agent: chooses payment route from machine-readable recipient profile.
-- Recipient user: publishes payment preferences linked to ENS.
-- Integrator app: calls MCP tools and executes returned payment instructions.
+- payer agent: receives natural language instruction and calls MCP tools
+- recipient user: publishes payment preferences and stealth metadata
+- integrator app: executes and monitors transaction lifecycle
 
 ## Functional Requirements
 
-- Resolve ENS name to payment profile metadata.
-- Return deterministic preference ranking for token/chain options.
-- Provide a privacy-ready receiver endpoint (stealth-compatible target).
-- Return actionable response format for automated payment orchestration.
-- Support optional payment-link payload generation.
+- support `get-payment-preferences(name)`
+- support `get-stealth-meta-address(name)`
+- support `generate-stealth-address(name)`
+- support `send-stealth-payment(params)`
+- support `scan-received-payments(keys)`
+- support `create-payment-link(params)`
 
 ## Non-Functional Requirements
 
-- predictable response schema
-- low-latency lookup path where possible
-- graceful failure with typed error messages
-- minimal leakage of user-identifying payment patterns
+- deterministic response schema
+- explicit error taxonomy for upstream MCP/SDK failures
+- low-friction integration for agentic workflows
+- privacy-aware defaults where data is available
 
 ## Acceptance Criteria (Draft)
 
-- Given a valid ENS with profile data, server returns at least one payable route.
-- Given incomplete profile data, server returns fallback route or typed error.
-- Returned route includes privacy mode metadata when stealth is available.
+- given a resolvable ENS name, payment preferences can be returned in typed JSON
+- given valid stealth metadata, a stealth receiver address can be generated
+- given payment params, transaction can be delegated to EVM MCP and return execution status
+- given scan keys, received stealth payment events can be discovered
 
 ## Open Questions
 
-- [TODO] Canonical ENS record keys for profile fields.
-- [TODO] Preferred fallback strategy ordering across chains.
-- [TODO] Minimum viability of gasless execution in hackathon timeframe.
+- [TODO] Final canonical ENS text-record keys for payment preferences.
+- [TODO] MVP definition for gasless behavior in this hackathon.
+- [TODO] Minimum chain set at launch (Ethereum/Base/OP/Arbitrum or subset).

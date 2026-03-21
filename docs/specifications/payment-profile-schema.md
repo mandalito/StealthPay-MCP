@@ -2,54 +2,53 @@
 
 ## Goal
 
-Define a machine-readable payment profile discoverable from ENS-linked data.
+Define a machine-readable payment profile derived from ENS data and consumed by StealthPay MCP.
 
 ## Logical Fields
 
 - `version`
 - `recipient_ens`
 - `preferred_chains` (ordered)
-- `preferred_assets` (ordered)
-- `fallback_rules`
+- `preferred_tokens` (ordered)
 - `privacy_mode` (`public` | `stealth_preferred` | `stealth_required`)
-- `stealth_config` (scheme, keys/public parameters)
-- `gasless_preferences`
+- `stealth_meta_address`
+- `gasless_preference` (`disabled` | `preferred`)
 - `updated_at`
 
 ## JSON Example
 
 ```json
 {
-  "version": "0.1",
+  "version": "0.2",
   "recipient_ens": "alice.eth",
-  "preferred_chains": ["base", "ethereum"],
-  "preferred_assets": ["USDC", "ETH"],
-  "fallback_rules": {
-    "allow_asset_conversion": true,
-    "max_slippage_bps": 100
-  },
+  "preferred_chains": ["base", "ethereum", "optimism"],
+  "preferred_tokens": ["USDC", "ETH"],
   "privacy_mode": "stealth_preferred",
-  "stealth_config": {
-    "scheme": "erc-5564",
-    "viewing_pubkey": "0x...",
-    "spending_pubkey": "0x..."
-  },
-  "gasless_preferences": {
-    "enabled": true,
-    "sponsor": "auto"
-  },
+  "stealth_meta_address": "st:eth:0x...",
+  "gasless_preference": "preferred",
   "updated_at": "2026-03-21T00:00:00Z"
 }
 ```
 
-## ENS Mapping (Placeholder)
+## ENS Mapping (Proposed for Hackathon)
 
-- [TODO] Define exact text records / contenthash strategy.
-- [TODO] Define max payload size and fragmentation strategy.
+- `stealthpay.preferred_chains`: comma-separated chain identifiers
+- `stealthpay.preferred_tokens`: comma-separated token symbols
+- `stealthpay.privacy_mode`: `public|stealth_preferred|stealth_required`
+- `stealthpay.gasless_preference`: `disabled|preferred`
+- `stealthpay.profile_version`: schema version marker
+- stealth meta-address source: ENS text record and/or ERC-6538 registry
 
 ## Validation Rules (Draft)
 
-- `version` is required.
-- ordered arrays must be non-empty when present.
-- `privacy_mode=stealth_required` requires valid `stealth_config`.
-- unknown fields should be ignored but logged for compatibility review.
+- `version` and `recipient_ens` are required
+- `stealth_required` must include resolvable stealth meta-address
+- chain identifiers must be in the supported network set
+- unknown fields are ignored but logged
+
+## Supported Network Set (Current Draft)
+
+- Ethereum
+- Base
+- OP (Optimism)
+- Arbitrum

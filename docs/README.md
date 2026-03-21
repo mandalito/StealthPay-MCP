@@ -13,6 +13,7 @@ docs/
     mcp-server-spec.md
     payment-profile-schema.md
   architecture/
+    mcp-composition.md
     system-overview.md
     privacy-stealth-addresses.md
   flows/
@@ -29,12 +30,13 @@ docs/
 
 1. `specifications/product-spec.md`
 2. `specifications/mcp-server-spec.md`
-3. `specifications/payment-profile-schema.md`
+3. `architecture/mcp-composition.md`
 4. `flows/agentic-payment-flow.md`
-5. `examples/quick-examples.md`
+5. `examples/mcp-tool-usage.md`
 
 ## Documentation Rules
 
+- Document StealthPay as an orchestration layer over Umbra SDK + ENS MCP + EVM MCP.
 - Keep behavior-first language: input, output, constraints, errors.
 - Prefer short, testable acceptance criteria.
 - Record assumptions and open questions explicitly.

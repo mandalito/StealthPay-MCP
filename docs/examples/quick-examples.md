@@ -1,38 +1,40 @@
 # Quick Examples
 
-## Example 1: Basic ENS Resolution
+## Example 1: Get Preferences
 
 Input:
 
-- ENS: `alice.eth`
-- Amount: `50`
-- Asset hint: `USDC`
+- tool: `get-payment-preferences`
+- `name`: `alice.eth`
 
 Expected outcome:
 
-- MCP resolves profile
-- suggests preferred chain/token route
-- includes privacy mode metadata
+- preferred chains/tokens returned from ENS-derived records
+- privacy mode returned for route logic
 
-## Example 2: Privacy-Required Payment
+## Example 2: Generate Stealth Address
 
 Input:
 
-- ENS: `privacyuser.eth`
-- Privacy requirement: `stealth_required`
+- tool: `generate-stealth-address`
+- `name`: `alice.eth`
+- `chain_id`: `8453` (Base)
+- `token`: `USDC`
 
 Expected outcome:
 
-- route uses stealth-compatible receiver target
-- if unavailable, returns `STEALTH_UNAVAILABLE`
+- stealth destination returned
+- includes metadata needed for announcement/recovery compatibility
 
-## Example 3: Fallback Routing
+## Example 3: Send Payment
 
 Input:
 
-- preferred asset unavailable on preferred chain
+- tool: `send-stealth-payment`
+- params for `alice.eth`, `50` `USDC`, chain Base
 
 Expected outcome:
 
-- route builder returns alternative route list
-- top route includes rationale fields
+- payment routed using derived stealth destination
+- transaction executed via EVM MCP
+- tx hash and status returned
