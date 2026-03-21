@@ -1,0 +1,31 @@
+{
+  "name": "stealthpay-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that gives AI agents the ability to make private payments using ENS identity and stealth addresses",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run test/stealth.test.ts test/payments.test.ts",
+    "test:ens": "vitest run test/ens.integration.test.ts",
+    "test:e2e": "tsx test/testnet-e2e.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.0",
+    "@noble/hashes": "^2.0.1",
+    "@noble/secp256k1": "^3.0.0",
+    "viem": "^2.9.16",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "dotenv": "^17.3.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "vitest": "^4.1.0"
+  }
+}
