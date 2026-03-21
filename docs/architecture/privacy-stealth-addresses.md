@@ -1,40 +1,23 @@
 # Privacy and Stealth Addresses
 
-## Motivation
+## Current Implementation
 
-Receiving repeated payments on one public address creates linkability and correlation risk.
+StealthPay uses ERC-5564-style stealth addressing logic implemented in `src/lib/stealth.ts`.
 
-## Hackathon Approach
+## Privacy Properties
 
-StealthPay MCP uses Umbra Protocol SDK primitives rather than implementing stealth logic from scratch.
+- each payment can target a fresh stealth address
+- address reuse is reduced
+- recipient can discover payments using viewing key + announcement data
 
-## Privacy Path
+## Recipient Recovery Model
 
-1. resolve stealth metadata for recipient identity
-2. derive unique stealth destination for payment context
-3. execute payment on chosen network
-4. receiver scans and recovers with compatible keys
+- scan announcements with viewing private key + spending public key
+- derive stealth private key from spending/viewing private keys + ephemeral public key
+- withdraw from stealth address
 
-## Interfaces in Scope
+## Known Limitations
 
-- ERC-5564 announcer
-- ERC-6538 registry
-- ENS text records
-- networks: Ethereum, Base, OP, Arbitrum
-
-## Threats Addressed
-
-- address reuse correlation
-- simple payer->recipient graph linkage
-
-## Threats Not Fully Addressed
-
-- transport-level metadata leakage
-- relayer/operator metadata leakage
-- full adversarial traffic analysis
-
-## Requirements
-
-- deterministic and testable integration with Umbra SDK
-- graceful fallback when stealth metadata is missing
-- explicit tool-level error when `stealth_required` cannot be satisfied
+- stealth addresses need ETH for gas to withdraw
+- metadata decoding assumes project-specific layout
+- cross-sender metadata interoperability is limited

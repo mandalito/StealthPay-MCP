@@ -172,6 +172,7 @@ src/
 ## Known limitations
 
 - **Gas for stealth addresses**: Stealth addresses are empty EOAs — the recipient needs ETH for gas to withdraw tokens. Future improvement: ERC-4337 paymaster.
+- **Sepolia stablecoin send path**: `send-stealth-payment` currently uses the `STABLECOINS` config map, which does not yet include Sepolia token addresses.
 - **Hoodi testnet**: Connected but ERC-5564/6538 contracts not yet deployed.
 - **Metadata format**: The scanner assumes the metadata format used by this project. Other ERC-5564 senders may use different layouts.
 

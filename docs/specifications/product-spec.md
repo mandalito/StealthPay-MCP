@@ -1,64 +1,38 @@
-# Product Specification
+# Product Specification (Current Implementation)
 
 ## Objective
 
-Build StealthPay MCP as a composition/orchestration layer that converts ENS identity into contextual, privacy-aware payment actions for AI agents and apps.
-
-## Product Positioning
-
-StealthPay MCP is not a replacement for ENS MCP or EVM MCP.
-
-- ENS MCP provides identity and record retrieval.
-- EVM MCP provides transaction execution.
-- StealthPay MCP provides payment intent interpretation, preference resolution, and Umbra-SDK-backed privacy routing.
+Provide an MCP server that enables private ENS-based payments using stealth addresses, including sender flow, recipient discovery, and ENS onboarding utilities.
 
 ## Scope
 
 In scope:
 
-- ENS-based payment preference resolution
-- stealth address generation and scanning via Umbra Protocol SDK
-- payment link creation for app/agent handoff
-- transaction orchestration via EVM MCP
+- ENS onboarding tools (`register-ens-name`, `register-stealth-keys`)
+- sender tools (`get-payment-profile`, `generate-stealth-address`, `send-stealth-payment`, `create-payment-link`)
+- recipient tools (`scan-announcements`, `derive-stealth-key`, `withdraw-from-stealth`)
+- Sepolia-first hackathon execution for registration and end-to-end testing
 
-Out of scope (hackathon baseline):
+Out of scope (hackathon MVP):
 
-- custom stealth cryptography implementation
 - gasless/sponsored transactions
-- full wallet UI product
-- production-grade multi-chain operations at scale
+- ERC-4337 paymaster integration
+- multi-provider failover and production reliability hardening
 
 ## Personas
 
-- payer agent: receives natural language instruction and calls MCP tools
-- recipient user: publishes payment preferences and stealth metadata
-- integrator app: executes and monitors transaction lifecycle
+- sender agent: pays an ENS recipient privately
+- recipient user: discovers and withdraws stealth payments
+- onboarding user: registers ENS name and stealth metadata
 
-## Functional Requirements
+## Current Constraints
 
-- support `get-payment-preferences(name)`
-- support `get-stealth-meta-address(name)`
-- support `generate-stealth-address(name)`
-- support `send-stealth-payment(params)`
-- support `scan-received-payments(keys)`
-- support `create-payment-link(params)`
-- support `send-stealth-payment` in both `execute` and `build_unsigned_tx` modes
+- `send-stealth-payment` supports stablecoin transfers only on chains configured in `STABLECOINS`.
+- Sepolia is used as hackathon testnet, but stablecoin send config for Sepolia is not yet wired in current code.
+- ENS profile parsing currently uses legacy ENS text keys (`chain`, `token`, `stealth-meta-address`).
 
-## Non-Functional Requirements
+## Acceptance Criteria (Current)
 
-- deterministic response schema
-- explicit error taxonomy for upstream MCP/SDK failures
-- low-friction integration for agentic workflows
-- privacy-aware defaults where data is available
-
-## Acceptance Criteria (Draft)
-
-- given a resolvable ENS name, payment preferences can be returned in typed JSON
-- given valid stealth metadata, a stealth receiver address can be generated
-- given payment params, transaction can be delegated to EVM MCP and return execution status
-- given scan keys, received stealth payment events can be discovered
-
-## Open Questions
-
-- [TODO] Final canonical ENS text-record keys for payment preferences.
-- [TODO] Minimum chain set at launch (Ethereum/Base/OP/Arbitrum or subset).
+- MCP server boots and registers 9 tools.
+- Unit tests for stealth math and payment links pass.
+- Recipient-side flow (`scan-announcements` + `derive-stealth-key` + `withdraw-from-stealth`) is documented and callable.

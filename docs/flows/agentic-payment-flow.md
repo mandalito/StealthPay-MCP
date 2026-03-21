@@ -1,30 +1,23 @@
-# Agentic Payment Flow
+# Agentic Payment Flow (Current)
 
-## Goal
+## Onboarding Flow
 
-Describe how an agent executes a contextual stealth payment with composed MCP services.
+1. Call `register-ens-name` (optional if user already owns ENS name).
+2. Call `register-stealth-keys` to write stealth metadata.
 
-## Step-by-Step
+## Sender Flow
 
-1. User asks agent: "Send 50 USDC to alice.eth privately".
-2. Agent calls `get-payment-preferences(name)`.
-3. StealthPay MCP resolves ENS records via ENS MCP.
-4. Agent calls `get-stealth-meta-address(name)`.
-5. Agent calls `generate-stealth-address(name)` with chain/token context.
-6. Agent calls `send-stealth-payment(params)` with either `execution_mode=execute` or `execution_mode=build_unsigned_tx`.
-7. StealthPay MCP delegates transaction execution to EVM MCP.
-8. Agent receives tx status and optional payment-link/receipt payload.
+1. Call `get-payment-profile(name)`.
+2. Call `generate-stealth-address(name)`.
+3. Call `send-stealth-payment(to, amount, token, chain)`.
+4. Optionally call `create-payment-link(...)` for sharing.
 
-## Decision Inputs
+## Recipient Flow
 
-- recipient preferred chains/tokens
-- payer execution constraints
-- privacy mode requirement
-- network support (Ethereum, Base, OP, Arbitrum)
+1. Call `scan-announcements(viewingPrivateKey, spendingPublicKey, ...)`.
+2. For each match, call `derive-stealth-key(...)`.
+3. Call `withdraw-from-stealth(...)`.
 
-## Failure Handling
+## Hackathon Testnet
 
-- ENS lookup failure: `ENS_RESOLUTION_FAILED`
-- no preferences: `PAYMENT_PREFERENCES_NOT_FOUND`
-- no stealth metadata: `STEALTH_META_ADDRESS_NOT_FOUND`
-- tx failure: `EVM_EXECUTION_FAILED`
+Use Sepolia for end-to-end hackathon tests.

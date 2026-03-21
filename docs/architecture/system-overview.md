@@ -1,34 +1,31 @@
-# System Overview
+# System Overview (Current)
 
 ## High-Level Components
 
-- MCP Tool Interface (StealthPay MCP)
-- Preference Resolver (ENS MCP client)
-- Umbra Adapter (Umbra Protocol SDK integration)
-- Route Builder and Payment Orchestrator
-- Transaction Executor (EVM MCP client)
-- Link/Intent Generator
+- MCP server (`src/index.ts`)
+- Tool handlers (`src/tools/*`)
+- ENS utilities (`src/lib/ens.ts`, `src/lib/ens-register.ts`)
+- Stealth cryptography (`src/lib/stealth.ts`)
+- Payment execution (`src/lib/payments.ts`)
+- Recipient discovery and claiming (`src/lib/scanner.ts`, `src/lib/withdraw.ts`)
 
-## Runtime Flow
+## Runtime Flow (Sender)
 
-1. Agent calls StealthPay MCP tool.
-2. StealthPay MCP queries ENS MCP for identity and payment preference records.
-3. StealthPay MCP calls Umbra SDK to resolve/generate stealth addressing data.
-4. Route builder picks token/chain path from preferences and constraints.
-5. StealthPay MCP optionally calls EVM MCP for transaction execution.
-6. Tool returns typed result (address, tx status, link payload, or scan results).
+1. Resolve ENS + stealth metadata.
+2. Generate one-time stealth address.
+3. Send transfer.
+4. Announce payment via ERC-5564.
 
-## Integration Points
+## Runtime Flow (Recipient)
 
-- ENS MCP APIs
-- EVM MCP APIs
-- Umbra Protocol SDK
-- ERC-5564 announcer contracts
-- ERC-6538 registry contracts
-- ENS records
+1. Scan announcements.
+2. Filter and match recipient keys.
+3. Derive stealth private key.
+4. Withdraw funds.
 
-## Design Constraints
+## Infrastructure
 
-- deterministic outputs per tool contract
-- explicit failure origin (ENS MCP vs EVM MCP vs Umbra SDK)
-- no custom stealth cryptography code in MVP
+- JSON-RPC via `viem`
+- ENS contracts (mainnet/sepolia contexts)
+- ERC-5564 announcer
+- ERC-6538 registry fallback lookup

@@ -1,41 +1,19 @@
-# Quick Examples
+# Quick Examples (Current)
 
-## Example 1: Get Preferences
+## Example 1: Onboard a New Recipient
 
-Input:
+- register ENS name on Sepolia
+- set stealth keys with `register-stealth-keys`
+- verify profile with `get-payment-profile`
 
-- tool: `get-payment-preferences`
-- `name`: `alice.eth`
+## Example 2: Send a Private Payment
 
-Expected outcome:
+- resolve recipient with `get-payment-profile`
+- generate one-time address with `generate-stealth-address`
+- send with `send-stealth-payment`
 
-- preferred chains/tokens returned from ENS-derived records
-- privacy mode returned for route logic
+## Example 3: Recipient Claims Funds
 
-## Example 2: Generate Stealth Address
-
-Input:
-
-- tool: `generate-stealth-address`
-- `name`: `alice.eth`
-- `chain_id`: `8453` (Base)
-- `token`: `USDC`
-
-Expected outcome:
-
-- stealth destination returned
-- includes metadata needed for announcement/recovery compatibility
-
-## Example 3: Send Payment
-
-Input:
-
-- tool: `send-stealth-payment`
-- params for `alice.eth`, `50` `USDC`, chain Base
-- `execution_mode`: `execute` (or `build_unsigned_tx`)
-
-Expected outcome:
-
-- payment routed using derived stealth destination
-- if `execute`: transaction executed via EVM MCP with tx hash/status
-- if `build_unsigned_tx`: unsigned payload returned for external signing/broadcast
+- discover incoming payments with `scan-announcements`
+- derive control key with `derive-stealth-key`
+- transfer out via `withdraw-from-stealth`

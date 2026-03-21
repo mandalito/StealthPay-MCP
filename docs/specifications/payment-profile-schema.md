@@ -1,52 +1,44 @@
-# Payment Profile Schema (Draft)
+# Payment Profile Schema (Current Implementation)
 
-## Goal
+## Returned Profile Shape
 
-Define a machine-readable payment profile derived from ENS data and consumed by StealthPay MCP.
+`get-payment-profile` currently returns:
 
-## Logical Fields
+- `ensName`
+- `address`
+- `avatar`
+- `preferredChain`
+- `preferredToken`
+- `stealthMetaAddress`
+- `description`
 
-- `version`
-- `recipient_ens`
-- `preferred_chains` (ordered)
-- `preferred_tokens` (ordered)
-- `privacy_mode` (`public` | `stealth_preferred` | `stealth_required`)
-- `stealth_meta_address`
-- `updated_at`
+## Current ENS Text Keys Read by Code
 
-## JSON Example
+- `avatar`
+- `chain`
+- `token`
+- `stealth-meta-address`
+- `description`
+
+## Stealth Meta-Address Lookup Order
+
+1. ENS text record `stealth-meta-address`
+2. ERC-6538 registry lookup by resolved ENS address
+
+## Example (Logical)
 
 ```json
 {
-  "version": "0.2",
-  "recipient_ens": "alice.eth",
-  "preferred_chains": ["base", "ethereum", "optimism"],
-  "preferred_tokens": ["USDC", "ETH"],
-  "privacy_mode": "stealth_preferred",
-  "stealth_meta_address": "st:eth:0x...",
-  "updated_at": "2026-03-21T00:00:00Z"
+  "ensName": "alice.eth",
+  "address": "0x...",
+  "avatar": "ipfs://...",
+  "preferredChain": "sepolia",
+  "preferredToken": "USDC",
+  "stealthMetaAddress": "st:eth:0x...",
+  "description": "Private payments preferred"
 }
 ```
 
-## ENS Mapping (Proposed for Hackathon)
+## Forward Compatibility
 
-- canonical key set: [ENS Text Record Keys](ens-text-record-keys.md)
-- stealth meta-address source: ENS resolver data and/or ERC-6538 registry
-
-## Validation Rules (Draft)
-
-- `version` and `recipient_ens` are required
-- `stealth_required` must include resolvable stealth meta-address
-- chain identifiers must be in the supported network set
-- unknown fields are ignored but logged
-
-## Supported Network Set (Current Draft)
-
-- Ethereum
-- Base
-- OP (Optimism)
-- Arbitrum
-
-## Future Extensions (Non-MVP)
-
-- `gasless_preference` may be added in a post-hackathon schema version.
+A future key freeze under `stealthpay.v1.*` is documented in `ens-text-record-keys.md`, but is not yet the active parser behavior.

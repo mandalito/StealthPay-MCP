@@ -1,6 +1,6 @@
 # Documentation Hub
 
-This folder contains the documentation baseline for the hackathon.
+This folder tracks the current implementation baseline for the hackathon.
 
 ## Documentation Tree
 
@@ -12,8 +12,8 @@ docs/
   specifications/
     product-spec.md
     mcp-server-spec.md
-    ens-text-record-keys.md
     payment-profile-schema.md
+    ens-text-record-keys.md
     network-support.md
   architecture/
     mcp-composition.md
@@ -29,18 +29,18 @@ docs/
     git-sync-workflow.md
 ```
 
-## Suggested Authoring Order
+## Current Baseline
 
-1. `specifications/product-spec.md`
-2. `specifications/mcp-server-spec.md`
-3. `architecture/mcp-composition.md`
-4. `flows/agentic-payment-flow.md`
-5. `examples/mcp-tool-usage.md`
+- Hackathon testnet decision: Sepolia
+- Implementation-first docs: tool names and payloads match current code in `src/tools/*`
+- Recipient flow is included (scan -> derive key -> withdraw)
+
+## Historical Note
+
+`implementation-gap-report.md` captures divergences discovered before this reconciliation pass.
 
 ## Documentation Rules
 
-- Document StealthPay as an orchestration layer over Umbra SDK + ENS MCP + EVM MCP.
-- Keep behavior-first language: input, output, constraints, errors.
-- Prefer short, testable acceptance criteria.
-- Record assumptions and open questions explicitly.
-- Update `docs/changelog.md` for meaningful documentation updates.
+- Document current behavior first.
+- Mark future features explicitly as non-MVP.
+- Keep API examples synchronized with actual tool names and input fields.

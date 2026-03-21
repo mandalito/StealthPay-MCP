@@ -1,35 +1,23 @@
-# MCP Composition
+# Runtime Composition (Current)
 
-## Intent
+## Current Design
 
-Clarify responsibilities across MCP servers and SDK dependencies.
+StealthPay MCP currently runs as a self-contained server using direct RPC access (`viem`) and local cryptography modules.
 
-## Responsibility Split
+## Internal Components
 
-- User/AI asks for a payment action.
-- StealthPay MCP coordinates payment logic.
-- ENS MCP resolves ENS identity and text records.
-- EVM MCP executes transactions and returns chain status.
-- Umbra Protocol SDK handles stealth meta-address and stealth address operations.
+- ENS resolution + ENS registration helpers
+- stealth address math/derivation
+- payment sender + ERC-5564 announcer calls
+- announcement scanner
+- withdrawal helper
 
-## Tool Surface Exposed by StealthPay MCP
+## Tool Groups
 
-- `get-stealth-meta-address(name)`
-- `generate-stealth-address(name)`
-- `get-payment-preferences(name)`
-- `create-payment-link(params)`
-- `send-stealth-payment(params)`
-- `scan-received-payments(keys)`
+- onboarding: register ENS name and stealth keys
+- sender: resolve profile, generate address, send, create link
+- recipient: scan, derive stealth key, withdraw
 
-## Onchain Interfaces in Scope
+## Note
 
-- ERC-5564 announcer
-- ERC-6538 registry
-- ENS text records
-- Networks: Ethereum, Base, OP, Arbitrum
-
-## Boundary Rules
-
-- StealthPay MCP does not replace ENS MCP.
-- StealthPay MCP does not replace EVM MCP.
-- StealthPay MCP should expose stable tool contracts even if upstream SDK/provider details change.
+Previous docs that described composition through ENS MCP and EVM MCP are now superseded by this current implementation baseline.

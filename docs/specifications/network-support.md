@@ -1,42 +1,40 @@
 # Network Support Status (Hackathon)
 
-## Decision Summary
+## Hackathon Decision
 
-Hoodi is currently not confirmed as a supported target for the chosen dependencies.
+Sepolia is the official testnet for hackathon development and demos.
 
-For hackathon delivery, Sepolia is the safest testnet baseline.
+## Current Code-Level Support
 
-## Umbra Protocol SDK Status
+### ENS registration tools
 
-Checked from the local clone of `ScopeLift/umbra-protocol`:
+- supported chains: `sepolia`, `ethereum` (via `ENS_CONTRACTS`)
+- default for registration tools: `sepolia`
 
-- no `hoodi` references found in repository source/config
-- network config/deployment parameters include `sepolia`, `mainnet`, `base`, `optimism`, `arbitrum` (and some others), but not `hoodi`
+### ENS resolution
 
-Local references:
+- defaults to mainnet
+- can be switched via `ENS_CHAIN=sepolia`
 
-- `.local/umbra-protocol/contracts-core/hardhat.config.ts`
-- `.local/umbra-protocol/contracts-core/scripts/deployParams.json`
-- `.local/umbra-protocol/contracts-core/scripts/deployParams-registry.json`
+### `send-stealth-payment` token routing
 
-## ENS Status
+Stablecoin send is currently configured for:
 
-Checked from official ENS deployment references and local `ens-contracts` clone:
+- `ethereum`, `base`, `optimism`, `arbitrum`, `polygon`, `gnosis`
 
-- official deployment matrix lists mainnet, sepolia, holesky (no hoodi entry)
-- local `ens-contracts` deployment folders include `sepolia` and `holesky`, but no `hoodi` folder
+Not currently configured in `STABLECOINS`:
 
-Local references:
+- `sepolia`
+- `hoodi`
 
-- `.local/ens-contracts/deployments/`
-- `.local/ens-contracts/hardhat.config.ts`
+### Recipient scanning/derivation
 
-## Practical Implication
+- works on any chain where announcer contract + RPC are reachable
+- tested scripts target Sepolia
 
-If the team keeps Hoodi as mandatory, additional work is required:
+## Hoodi Status
 
-- deploy and maintain Umbra-compatible contracts on Hoodi
-- deploy/confirm ENS registry + resolver stack on Hoodi
-- reconfigure ENS MCP and EVM MCP for Hoodi chain metadata
+Hoodi remains experimental in this codebase:
 
-For hackathon reliability, use Sepolia for end-to-end demo unless Hoodi deployments are completed first.
+- chain is listed in `SUPPORTED_CHAINS`
+- contracts/token support is not complete for the full payment flow

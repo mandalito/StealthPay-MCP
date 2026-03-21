@@ -1,5 +1,12 @@
 # Documentation Changelog
 
+## v0.7.0 - 2026-03-21T15:02:13+01:00
+
+- Reconciled docs with current 9-tool implementation (onboarding, sender, recipient flows).
+- Updated architecture/spec/examples to reflect direct RPC + local module design.
+- Set Sepolia as hackathon testnet baseline in documentation.
+- Added Vitest exclusion guidance by updating test config to ignore `.local/**`.
+
 ## v0.6.0 - 2026-03-21T13:11:58+01:00
 
 - Added `docs/implementation-gap-report.md` to compare implementation against current documentation.

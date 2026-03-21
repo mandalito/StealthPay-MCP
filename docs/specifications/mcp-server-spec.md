@@ -1,129 +1,144 @@
-# MCP Server Specification
+# MCP Server Specification (Current Implementation)
 
-## Purpose
+## Registered Tools
 
-Define StealthPay MCP tools, payload shapes, and error contracts.
+### Onboarding
 
-## External Dependencies
-
-- Umbra Protocol SDK: stealth meta-address logic and stealth address derivation/scanning
-- ENS MCP: ENS identity and text-record retrieval
-- EVM MCP: transaction execution and status checks
-
-## Tool Specifications (Draft)
-
-### `get-payment-preferences`
+#### `register-ens-name`
 
 Input:
 
-- `name` (string, ENS)
+- `label` (string)
+- `chain` (string, default `sepolia`, supported by `ENS_CONTRACTS`)
+- `years` (number, default `1`)
 
-Output:
+Behavior:
 
-- `name`
-- `preferred_chains` (ordered list)
-- `preferred_tokens` (ordered list)
-- `privacy_mode`
-- `raw_records` (optional debug payload)
+- commit -> wait -> register flow via ENS controller
+- uses `SENDER_PRIVATE_KEY`
 
-### `get-stealth-meta-address`
-
-Input:
-
-- `name` (string, ENS)
-
-Output:
-
-- `name`
-- `stealth_meta_address`
-- `source` (ENS record / registry / fallback)
-
-### `generate-stealth-address`
+#### `register-stealth-keys`
 
 Input:
 
-- `name` (string, ENS)
-- `chain_id` (number)
-- `token` (string)
+- `name` (string, full ENS name)
+- `chain` (string, default `sepolia`)
 
-Output:
+Behavior:
 
-- `name`
-- `stealth_address`
-- `ephemeral_pubkey` (if applicable)
-- `announcer_contract`
-- `registry_contract`
+- generates spending/viewing keypairs
+- writes ENS text record key `stealth-meta-address`
+- returns generated key material in tool output
 
-### `send-stealth-payment`
+### Sender
+
+#### `get-payment-profile`
 
 Input:
 
-- `name` (string, ENS)
+- `name` (string)
+
+Output fields (logical):
+
+- ENS address, avatar, preferred chain/token, stealth meta-address, description
+
+#### `generate-stealth-address`
+
+Input:
+
+- `name` (string)
+
+Output fields (logical):
+
+- stealth address
+- ephemeral public key
+- view tag
+
+#### `send-stealth-payment`
+
+Input:
+
+- `to` (ENS name)
 - `amount` (string)
-- `token` (string)
-- `chain_id` (number)
-- `max_slippage_bps` (optional)
-- `execution_mode` (optional: `execute|build_unsigned_tx`, default `execute`)
+- `token` (string, default `USDC`)
+- `chain` (string, default from `DEFAULT_CHAIN`)
 
-Output:
+Behavior:
 
-- `route_summary`
-- `stealth_address`
-- `chain_id`
-- `execution_mode`
-- `tx_hash` (present when `execution_mode=execute`)
-- `status` (present when `execution_mode=execute`)
-- `unsigned_tx` (present when `execution_mode=build_unsigned_tx`)
+- resolves stealth meta-address
+- generates one-time stealth address
+- sends ERC-20 transfer
+- announces through ERC-5564 announcer
 
-Notes:
+Note:
 
-- this tool composes `generate-stealth-address` + EVM MCP transaction building/execution
-- in `build_unsigned_tx`, StealthPay MCP returns payload for external signing/broadcast
+- current implementation executes directly (no unsigned-tx mode)
 
-### `scan-received-payments`
+#### `create-payment-link`
 
 Input:
 
-- `keys` (object; viewing/spending or scan-compatible key material)
-- `chain_ids` (array<number>)
-- `from_block` (optional)
+- `to` (string)
+- `amount` (optional)
+- `token` (optional)
+- `chain` (optional)
+- `memo` (optional)
 
-Output:
+Behavior:
 
-- `payments` (array)
-- `next_cursor` (optional)
+- builds URL with query params
 
-### `create-payment-link`
+### Recipient
+
+#### `scan-announcements`
 
 Input:
 
-- `name` (string, ENS)
-- `amount` (string)
-- `token` (string)
-- `chain_id` (number)
-- `expires_at` (optional)
-- `metadata` (optional object)
+- `viewingPrivateKey`
+- `spendingPublicKey`
+- `chain` (optional)
+- `fromBlock` (optional)
+- `toBlock` (optional)
 
-Output:
+Behavior:
 
-- `payment_link`
-- `intent_payload`
-- `expires_at`
+- scans ERC-5564 `Announcement` events
+- filters by view tag + full stealth address check
 
-## Error Model (Draft)
+#### `derive-stealth-key`
 
-- `INVALID_INPUT`
-- `ENS_RESOLUTION_FAILED`
-- `PAYMENT_PREFERENCES_NOT_FOUND`
-- `STEALTH_META_ADDRESS_NOT_FOUND`
-- `UMBRA_SDK_ERROR`
-- `EVM_EXECUTION_FAILED`
-- `UNSIGNED_BUILD_UNSUPPORTED`
-- `UNSUPPORTED_CHAIN`
-- `INTERNAL_ERROR`
+Input:
 
-## Response Principles
+- `spendingPrivateKey`
+- `viewingPrivateKey`
+- `ephemeralPublicKey`
+- `expectedAddress` (optional)
 
-- deterministic fields and types
-- explicit upstream provenance (`ens_mcp`, `evm_mcp`, `umbra_sdk`)
-- no hidden route-selection assumptions
+Behavior:
+
+- derives stealth private key and address
+- optionally verifies against expected address
+
+#### `withdraw-from-stealth`
+
+Input:
+
+- `stealthPrivateKey`
+- `to`
+- `token` (`ETH` or ERC-20 address)
+- `amount` (optional)
+- `chain` (optional)
+
+Behavior:
+
+- sends ETH or ERC-20 transfer from stealth address
+- requires ETH on stealth address to pay gas
+
+## Response Format
+
+Current tools return human-readable text blocks via MCP `content[]`.
+
+## Error Model (Current)
+
+Errors are returned as text with `isError=true`.
+Most errors are runtime validation or RPC/contract call failures.

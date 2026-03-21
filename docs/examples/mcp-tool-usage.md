@@ -1,36 +1,37 @@
-# MCP Tool Usage Examples (Pseudo)
+# MCP Tool Usage Examples (Current)
 
-## `get-payment-preferences`
+## `register-ens-name`
 
 ```json
 {
-  "tool": "get-payment-preferences",
+  "tool": "register-ens-name",
   "input": {
-    "name": "alice.eth"
+    "label": "stealthpaydemo123",
+    "chain": "sepolia",
+    "years": 1
   }
 }
 ```
 
-## `get-stealth-meta-address`
+## `register-stealth-keys`
 
 ```json
 {
-  "tool": "get-stealth-meta-address",
+  "tool": "register-stealth-keys",
   "input": {
-    "name": "alice.eth"
+    "name": "stealthpaydemo123.eth",
+    "chain": "sepolia"
   }
 }
 ```
 
-## `generate-stealth-address`
+## `get-payment-profile`
 
 ```json
 {
-  "tool": "generate-stealth-address",
+  "tool": "get-payment-profile",
   "input": {
-    "name": "alice.eth",
-    "chain_id": 8453,
-    "token": "USDC"
+    "name": "alice.eth"
   }
 }
 ```
@@ -41,55 +42,50 @@
 {
   "tool": "send-stealth-payment",
   "input": {
-    "name": "alice.eth",
+    "to": "alice.eth",
     "amount": "50",
     "token": "USDC",
-    "chain_id": 8453,
-    "execution_mode": "execute"
+    "chain": "base"
   }
 }
 ```
 
-## `send-stealth-payment` (unsigned payload mode)
+## `scan-announcements`
 
 ```json
 {
-  "tool": "send-stealth-payment",
+  "tool": "scan-announcements",
   "input": {
-    "name": "alice.eth",
-    "amount": "50",
-    "token": "USDC",
-    "chain_id": 8453,
-    "execution_mode": "build_unsigned_tx"
+    "viewingPrivateKey": "0x...",
+    "spendingPublicKey": "0x...",
+    "chain": "sepolia"
   }
 }
 ```
 
-## `scan-received-payments`
+## `derive-stealth-key`
 
 ```json
 {
-  "tool": "scan-received-payments",
+  "tool": "derive-stealth-key",
   "input": {
-    "keys": {
-      "viewing_key": "0x..."
-    },
-    "chain_ids": [1, 8453, 10, 42161]
+    "spendingPrivateKey": "0x...",
+    "viewingPrivateKey": "0x...",
+    "ephemeralPublicKey": "0x..."
   }
 }
 ```
 
-## `create-payment-link`
+## `withdraw-from-stealth`
 
 ```json
 {
-  "tool": "create-payment-link",
+  "tool": "withdraw-from-stealth",
   "input": {
-    "name": "alice.eth",
-    "amount": "50",
-    "token": "USDC",
-    "chain_id": 8453,
-    "expires_at": "2026-03-22T12:00:00Z"
+    "stealthPrivateKey": "0x...",
+    "to": "0xabc...",
+    "token": "ETH",
+    "chain": "sepolia"
   }
 }
 ```
