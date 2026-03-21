@@ -29,7 +29,8 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { sepolia, hoodi } from 'viem/chains';
 import { getPublicKey, utils } from '@noble/secp256k1';
 import { bytesToHex, hexToBytes } from 'viem/utils';
-import { generateStealthAddress, checkStealthAddress } from '../src/lib/stealth.js';
+import { generateStealthAddress, checkStealthAddress, deriveStealthPrivateKey } from '../src/lib/stealth.js';
+import { scanAnnouncements } from '../src/lib/scanner.js';
 import {
   ERC5564_ANNOUNCER,
   ERC5564_ANNOUNCER_ABI,
@@ -205,13 +206,59 @@ async function main() {
           hash: announceTx,
         });
         ok(`Confirmed in block ${announceReceipt.blockNumber} (status: ${announceReceipt.status})`);
+
+        // ── Step 6: Scan for the announcement (recipient side) ────────
+
+        step(6, 'Scan announcements (recipient discovers payment)');
+
+        const payments = await scanAnnouncements({
+          viewingPrivateKey: bytesToHex(recipientViewPriv) as `0x${string}`,
+          spendingPublicKey: bytesToHex(recipientSpendPub) as `0x${string}`,
+          chain: 'sepolia',
+          fromBlock: announceReceipt.blockNumber,
+          toBlock: announceReceipt.blockNumber,
+        });
+
+        if (payments.length === 0) {
+          fail('Scanner found no payments — expected to discover our announcement');
+        }
+
+        const found = payments.find(
+          (p) => p.stealthAddress.toLowerCase() === stealth.stealthAddress.toLowerCase()
+        );
+        if (!found) {
+          fail(`Scanner found ${payments.length} payment(s) but none match our stealth address`);
+        }
+        ok(`Found payment at stealth address: ${found.stealthAddress}`);
+        ok(`Ephemeral key from event: ${found.ephemeralPublicKey.slice(0, 20)}...`);
+
+        // ── Step 7: Derive stealth private key ────────────────────────
+
+        step(7, 'Derive stealth private key (recipient claims)');
+
+        const derived = deriveStealthPrivateKey({
+          spendingPrivateKey: bytesToHex(recipientSpendPriv) as `0x${string}`,
+          viewingPrivateKey: bytesToHex(recipientViewPriv) as `0x${string}`,
+          ephemeralPublicKey: found.ephemeralPublicKey,
+          expectedAddress: stealth.stealthAddress,
+        });
+
+        ok(`Derived address: ${derived.stealthAddress}`);
+        ok(`Matches stealth address: ✓`);
+
+        // Verify derived key can act as the stealth address
+        const derivedAccount = privateKeyToAccount(derived.stealthPrivateKey);
+        if (derivedAccount.address.toLowerCase() !== stealth.stealthAddress.toLowerCase()) {
+          fail('Derived key address does not match stealth address');
+        }
+        ok('Derived private key controls the stealth address');
       }
     }
   }
 
-  // ── Step 6: Hoodi connectivity ────────────────────────────────────────
+  // ── Step 8: Hoodi connectivity ────────────────────────────────────────
 
-  step(6, 'Check Hoodi testnet connectivity');
+  step(8, 'Check Hoodi testnet connectivity');
 
   try {
     const hoodiClient = createPublicClient({

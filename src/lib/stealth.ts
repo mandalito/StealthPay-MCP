@@ -107,6 +107,56 @@ export function checkStealthAddress(params: {
   return derivedAddress.toLowerCase() === params.userStealthAddress.toLowerCase();
 }
 
+// secp256k1 curve order
+const CURVE_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
+
+export interface DerivedStealthKey {
+  stealthPrivateKey: `0x${string}`;
+  stealthAddress: `0x${string}`;
+}
+
+/**
+ * Derive the private key for a stealth address.
+ *
+ * stealth_priv = (spend_priv + keccak256(ECDH(view_priv, eph_pub).x)) mod n
+ */
+export function deriveStealthPrivateKey(params: {
+  spendingPrivateKey: `0x${string}`;
+  viewingPrivateKey: `0x${string}`;
+  ephemeralPublicKey: `0x${string}`;
+  expectedAddress?: `0x${string}`;
+}): DerivedStealthKey {
+  // Compute shared secret (same as check path)
+  const sharedSecretCompressed = getSharedSecret(
+    hexToBytes(params.viewingPrivateKey),
+    hexToBytes(params.ephemeralPublicKey)
+  );
+  const sharedSecretX = sharedSecretCompressed.slice(1);
+  const hashedSecret = keccak256(sharedSecretX);
+
+  // Scalar addition mod curve order
+  const hashedSecretScalar = etc.bytesToNumberBE(hexToBytes(hashedSecret));
+  const spendScalar = etc.bytesToNumberBE(hexToBytes(params.spendingPrivateKey));
+  const stealthScalar = (spendScalar + hashedSecretScalar) % CURVE_ORDER;
+
+  // Convert back to 32-byte hex
+  const stealthPrivBytes = etc.numberToBytesBE(stealthScalar);
+  const stealthPrivateKey = bytesToHex(stealthPrivBytes) as `0x${string}`;
+
+  // Derive the address from the stealth private key
+  const stealthPubKey = getPublicKey(stealthPrivBytes, false); // uncompressed
+  const stealthAddress = publicKeyToAddress(bytesToHex(stealthPubKey));
+
+  if (params.expectedAddress &&
+      stealthAddress.toLowerCase() !== params.expectedAddress.toLowerCase()) {
+    throw new Error(
+      `Derived address ${stealthAddress} does not match expected ${params.expectedAddress}`
+    );
+  }
+
+  return { stealthPrivateKey, stealthAddress };
+}
+
 /**
  * Parse a stealth meta-address into spending and viewing public keys.
  * Format: 0x + spending_pub_key (33 bytes compressed) + viewing_pub_key (33 bytes compressed)

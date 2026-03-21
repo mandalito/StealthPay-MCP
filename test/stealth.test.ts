@@ -5,7 +5,8 @@
 import { describe, it, expect } from 'vitest';
 import { getPublicKey, utils } from '@noble/secp256k1';
 import { bytesToHex } from 'viem/utils';
-import { generateStealthAddress, checkStealthAddress } from '../src/lib/stealth.js';
+import { generateStealthAddress, checkStealthAddress, deriveStealthPrivateKey } from '../src/lib/stealth.js';
+import { privateKeyToAccount } from 'viem/accounts';
 
 /** Helper: create a stealth meta-address from a keypair (spending + viewing). */
 function makeMetaAddress(
@@ -155,8 +156,76 @@ describe('stealth meta-address parsing', () => {
   });
 });
 
-describe('multiple round-trips (statistical confidence)', () => {
-  it('passes 20 consecutive round-trips', () => {
+describe('deriveStealthPrivateKey', () => {
+  const spendPriv = utils.randomSecretKey();
+  const spendPub = getPublicKey(spendPriv, true);
+  const viewPriv = utils.randomSecretKey();
+  const viewPub = getPublicKey(viewPriv, true);
+  const metaAddress = makeMetaAddress(spendPub, viewPub);
+
+  it('derives a key that controls the stealth address', () => {
+    const stealth = generateStealthAddress(metaAddress);
+
+    const derived = deriveStealthPrivateKey({
+      spendingPrivateKey: bytesToHex(spendPriv) as `0x${string}`,
+      viewingPrivateKey: bytesToHex(viewPriv) as `0x${string}`,
+      ephemeralPublicKey: stealth.ephemeralPublicKey,
+    });
+
+    // The derived address must match the generated stealth address
+    expect(derived.stealthAddress.toLowerCase()).toBe(
+      stealth.stealthAddress.toLowerCase()
+    );
+  });
+
+  it('derived key can sign as the stealth address (viem account)', () => {
+    const stealth = generateStealthAddress(metaAddress);
+
+    const derived = deriveStealthPrivateKey({
+      spendingPrivateKey: bytesToHex(spendPriv) as `0x${string}`,
+      viewingPrivateKey: bytesToHex(viewPriv) as `0x${string}`,
+      ephemeralPublicKey: stealth.ephemeralPublicKey,
+    });
+
+    // Create a viem account from the derived key and verify the address
+    const account = privateKeyToAccount(derived.stealthPrivateKey);
+    expect(account.address.toLowerCase()).toBe(
+      stealth.stealthAddress.toLowerCase()
+    );
+  });
+
+  it('passes expectedAddress verification', () => {
+    const stealth = generateStealthAddress(metaAddress);
+
+    // Should not throw
+    const derived = deriveStealthPrivateKey({
+      spendingPrivateKey: bytesToHex(spendPriv) as `0x${string}`,
+      viewingPrivateKey: bytesToHex(viewPriv) as `0x${string}`,
+      ephemeralPublicKey: stealth.ephemeralPublicKey,
+      expectedAddress: stealth.stealthAddress,
+    });
+
+    expect(derived.stealthAddress.toLowerCase()).toBe(
+      stealth.stealthAddress.toLowerCase()
+    );
+  });
+
+  it('throws on expectedAddress mismatch', () => {
+    const stealth = generateStealthAddress(metaAddress);
+
+    expect(() =>
+      deriveStealthPrivateKey({
+        spendingPrivateKey: bytesToHex(spendPriv) as `0x${string}`,
+        viewingPrivateKey: bytesToHex(viewPriv) as `0x${string}`,
+        ephemeralPublicKey: stealth.ephemeralPublicKey,
+        expectedAddress: '0x0000000000000000000000000000000000000001',
+      })
+    ).toThrow(/does not match expected/);
+  });
+});
+
+describe('full round-trip: generate → check → derive (20 iterations)', () => {
+  it('all three steps are consistent', () => {
     for (let i = 0; i < 20; i++) {
       const spendPriv = utils.randomSecretKey();
       const spendPub = getPublicKey(spendPriv, true);
@@ -164,17 +233,30 @@ describe('multiple round-trips (statistical confidence)', () => {
       const viewPub = getPublicKey(viewPriv, true);
 
       const meta = makeMetaAddress(spendPub, viewPub);
-      const result = generateStealthAddress(meta);
+      const stealth = generateStealthAddress(meta);
 
-      const isMatch = checkStealthAddress({
-        ephemeralPublicKey: result.ephemeralPublicKey,
+      // Check
+      const isOurs = checkStealthAddress({
+        ephemeralPublicKey: stealth.ephemeralPublicKey,
         spendingPublicKey: bytesToHex(spendPub) as `0x${string}`,
         viewingPrivateKey: bytesToHex(viewPriv) as `0x${string}`,
-        userStealthAddress: result.stealthAddress,
-        viewTag: result.viewTag,
+        userStealthAddress: stealth.stealthAddress,
+        viewTag: stealth.viewTag,
+      });
+      expect(isOurs).toBe(true);
+
+      // Derive
+      const derived = deriveStealthPrivateKey({
+        spendingPrivateKey: bytesToHex(spendPriv) as `0x${string}`,
+        viewingPrivateKey: bytesToHex(viewPriv) as `0x${string}`,
+        ephemeralPublicKey: stealth.ephemeralPublicKey,
+        expectedAddress: stealth.stealthAddress,
       });
 
-      expect(isMatch).toBe(true);
+      const account = privateKeyToAccount(derived.stealthPrivateKey);
+      expect(account.address.toLowerCase()).toBe(
+        stealth.stealthAddress.toLowerCase()
+      );
     }
   });
 });
