@@ -4,6 +4,18 @@
 
 Keep documentation work synchronized with ongoing MCP implementation and tests.
 
+## Local-Only Dependencies
+
+Use `.local/` for SDKs or helper repos that should not be committed.
+
+Example:
+
+```bash
+git clone https://github.com/ScopeLift/umbra-protocol .local/umbra-protocol
+```
+
+The root `.gitignore` excludes `.local/` from version control.
+
 ## Daily Baseline
 
 ```bash
