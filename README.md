@@ -49,7 +49,21 @@ ENS_CHAIN=sepolia
 # Optional: custom RPC endpoints (defaults to public RPCs)
 # RPC_URL=https://eth-sepolia.g.alchemy.com/v2/<key>
 # ENS_RPC_URL=https://...
+
+# Optional: recipient keys (for scan/claim flows)
+# Fill these from `register-stealth-keys` output
+# RECIPIENT_SPENDING_PRIVATE_KEY=0x...
+# RECIPIENT_SPENDING_PUBLIC_KEY=0x...
+# RECIPIENT_VIEWING_PRIVATE_KEY=0x...
+# RECIPIENT_VIEWING_PUBLIC_KEY=0x...
 ```
+
+Recipient key handling:
+
+- `register-stealth-keys` returns one spending keypair and one viewing keypair.
+- Save those values in local `.env` under `RECIPIENT_*`.
+- Only the stealth meta-address is written on-chain; private keys are never stored on-chain.
+- `.env` is gitignored, so these secrets stay local unless you export them elsewhere.
 
 ### Add to Claude Code
 
@@ -130,6 +144,15 @@ npx tsx test/register-e2e.ts <label>
 ## Architecture
 
 ```
+
+## Local Helpers (`.local/`)
+
+`.local/` is a gitignored workspace for local-only artifacts:
+
+- cloned external repos used for reference (for example Umbra SDK source)
+- temporary MCP probe scripts (`.mjs`) used to exercise tools over stdio during debugging
+
+These scripts are not part of the production server and are not committed.
 src/
 ├── index.ts                 # MCP server entry point
 ├── config.ts                # Chain configs, contract addresses, ABIs

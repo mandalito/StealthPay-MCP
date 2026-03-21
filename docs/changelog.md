@@ -1,5 +1,11 @@
 # Documentation Changelog
 
+## v0.8.0 - 2026-03-21T16:07:40+01:00
+
+- Documented `.local/` usage for local MCP probe scripts (`mcp-*.mjs`) and SDK clones.
+- Added guidance to persist `register-stealth-keys` outputs in local `.env` recipient variables (`RECIPIENT_*`).
+- Updated quick-start and collaboration docs to clarify where stealth private keys are stored (local only, not on-chain).
+
 ## v0.7.0 - 2026-03-21T15:02:13+01:00
 
 - Reconciled docs with current 9-tool implementation (onboarding, sender, recipient flows).

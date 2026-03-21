@@ -16,6 +16,19 @@ git clone https://github.com/ScopeLift/umbra-protocol .local/umbra-protocol
 
 The root `.gitignore` excludes `.local/` from version control.
 
+`.local/` can also contain ad-hoc MCP probe scripts (for example `mcp-*.mjs`) used to test tool calls against `dist/index.js`. Keep them local-only.
+
+## Local Secrets
+
+Persist recipient recovery keys in `.env` (gitignored):
+
+- `RECIPIENT_SPENDING_PRIVATE_KEY`
+- `RECIPIENT_SPENDING_PUBLIC_KEY`
+- `RECIPIENT_VIEWING_PRIVATE_KEY`
+- `RECIPIENT_VIEWING_PUBLIC_KEY`
+
+These values come from `register-stealth-keys` output and are required for scan/derive/claim flows.
+
 ## Daily Baseline
 
 ```bash

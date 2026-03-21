@@ -34,6 +34,7 @@ docs/
 - Hackathon testnet decision: Sepolia
 - Implementation-first docs: tool names and payloads match current code in `src/tools/*`
 - Recipient flow is included (scan -> derive key -> withdraw)
+- Local helper scripts and external SDK clones are kept under gitignored `.local/`
 
 ## Historical Note
 

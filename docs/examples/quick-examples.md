@@ -4,6 +4,7 @@
 
 - register ENS name on Sepolia
 - set stealth keys with `register-stealth-keys`
+- copy returned spending/viewing keys into local `.env` (`RECIPIENT_*`)
 - verify profile with `get-payment-profile`
 
 ## Example 2: Send a Private Payment
