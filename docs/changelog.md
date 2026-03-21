@@ -1,5 +1,13 @@
 # Documentation Changelog
 
+## v0.14.0 - 2026-03-21T18:12:37+01:00
+
+- Added deployment re-check automation via `npm run check:deployments` (`scripts/check-deployments.mjs`).
+- Added Sepolia fork integration test profile (`npm run test:fork`) with dedicated config (`vitest.fork.config.ts`) and initial send/scan/claim flow coverage.
+- Added README security/testing guidance for fork tests and deployment verification commands.
+- Updated network support docs with Hoodi status decision and deployment re-check command.
+- Updated consolidated TODO to mark `P1 - Network / Deployment Clarity` and fork-profile evaluation as completed.
+
 ## v0.13.0 - 2026-03-21T17:58:17+01:00
 
 - Added README security best-practice guidance to keep private keys out of chat/tool inputs and use env-only claim flows.

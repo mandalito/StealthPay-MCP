@@ -25,6 +25,12 @@ are executable scenario scripts, not Vitest unit test files.
 - often require funded wallets and live RPC/network state
 - used for full workflow validation and demos
 
+### `*.integration.test.ts` fork profile
+
+- on-demand integration profile for fork-based scenarios
+- run with `npm run test:fork`
+- designed for transaction-heavy flows without impacting default deterministic suite
+
 ## Are E2E Script Files Required?
 
 - Not required for `npm test` pass/fail.

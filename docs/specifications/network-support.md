@@ -40,6 +40,10 @@ Result (`eth_getCode`):
 | sepolia | deployed | deployed |
 | hoodi | not deployed | not deployed |
 
+Re-check command:
+
+- `npm run check:deployments`
+
 ## Token Routing (`send-stealth-payment`)
 
 Stablecoin symbol mapping in `STABLECOINS` is configured for:
@@ -55,3 +59,7 @@ Notes:
 
 - `ETH` (native) and explicit ERC-20 contract addresses can still be used.
 - For hackathon demos, Sepolia with native ETH is the baseline.
+
+## Hoodi Decision (2026-03-21)
+
+`hoodi` remains in `SUPPORTED_CHAINS` for forward compatibility and read-path experimentation, but is not considered operational for stealth payment flows until singleton contracts are deployed.

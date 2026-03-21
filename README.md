@@ -198,6 +198,14 @@ npm test
 # ENS integration test (reads mainnet ENS)
 npm run test:ens
 
+# Re-check onchain singleton deployments across configured chains
+npm run check:deployments
+
+# Sepolia fork integration (on-demand)
+# Uses SEPOLIA_FORK_URL (or RPC_URL fallback) as fork upstream.
+# Set FORK_REQUIRED=true to fail hard if fork node cannot start.
+npm run test:fork
+
 # Full Sepolia E2E (send → announce → scan → claim)
 # Requires SENDER_PRIVATE_KEY with Sepolia ETH
 npm run test:e2e

@@ -13,11 +13,13 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
+    "check:deployments": "node scripts/check-deployments.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:tools": "vitest run test/tools",
     "test:unit": "vitest run test/stealth.test.ts test/payments.test.ts",
     "test:ens": "vitest run test/ens.integration.test.ts",
+    "test:fork": "vitest run --config vitest.fork.config.ts",
     "test:e2e": "tsx test/testnet-e2e.ts"
   },
   "dependencies": {

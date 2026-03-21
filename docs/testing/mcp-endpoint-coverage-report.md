@@ -57,6 +57,9 @@ This checks that `registerEnsName` throws when commit/register receipts are reve
   - Runs MCP endpoint handler tests only (`test/tools`)
 - `npm run test:ens`
   - Runs ENS live integration test (network-dependent)
+- `npm run test:fork`
+  - Runs fork-backed integration profile (`test/fork/sepolia-fork.integration.test.ts`)
+  - Uses `SEPOLIA_FORK_URL` (or `RPC_URL` fallback) as fork upstream
 
 ## Sepolia Fork Recommendation
 
