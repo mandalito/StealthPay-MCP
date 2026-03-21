@@ -5,7 +5,7 @@
 import { createPublicClient, createWalletClient, http, formatEther, namehash, pad, toHex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { getPublicKey, utils } from '@noble/secp256k1';
-import { bytesToHex } from 'viem/utils';
+import { bytesToHex, hexToBytes } from 'viem/utils';
 import {
   SUPPORTED_CHAINS,
   ENS_CONTRACTS,
@@ -179,6 +179,7 @@ export interface RegisterStealthKeysResult {
   spendingPublicKey: `0x${string}`;
   viewingPrivateKey: `0x${string}`;
   viewingPublicKey: `0x${string}`;
+  keysReused: boolean;
 }
 
 /**
@@ -202,11 +203,32 @@ export async function registerStealthKeys(params: {
   const publicClient = createPublicClient({ chain, transport: http(rpcUrl) });
   const walletClient = createWalletClient({ account, chain, transport: http(rpcUrl) });
 
-  // Generate keypairs
-  const spendingPriv = utils.randomSecretKey();
-  const spendingPub = getPublicKey(spendingPriv, true);
-  const viewingPriv = utils.randomSecretKey();
-  const viewingPub = getPublicKey(viewingPriv, true);
+  // Reuse existing keypairs if available, otherwise generate new ones.
+  // This ensures all ENS names share the same stealth identity.
+  const existingSpendingPriv = process.env.RECIPIENT_SPENDING_PRIVATE_KEY;
+  const existingViewingPriv = process.env.RECIPIENT_VIEWING_PRIVATE_KEY;
+
+  let spendingPriv: Uint8Array;
+  let spendingPub: Uint8Array;
+  let viewingPriv: Uint8Array;
+  let viewingPub: Uint8Array;
+  let keysReused: boolean;
+
+  if (existingSpendingPriv && existingViewingPriv) {
+    // Reuse existing keys
+    spendingPriv = hexToBytes(existingSpendingPriv as `0x${string}`);
+    spendingPub = getPublicKey(spendingPriv, true);
+    viewingPriv = hexToBytes(existingViewingPriv as `0x${string}`);
+    viewingPub = getPublicKey(viewingPriv, true);
+    keysReused = true;
+  } else {
+    // Generate fresh keypairs
+    spendingPriv = utils.randomSecretKey();
+    spendingPub = getPublicKey(spendingPriv, true);
+    viewingPriv = utils.randomSecretKey();
+    viewingPub = getPublicKey(viewingPriv, true);
+    keysReused = false;
+  }
 
   const stealthMetaAddress =
     'st:eth:0x' +
@@ -237,6 +259,7 @@ export async function registerStealthKeys(params: {
     spendingPublicKey: bytesToHex(spendingPub) as `0x${string}`,
     viewingPrivateKey: bytesToHex(viewingPriv) as `0x${string}`,
     viewingPublicKey: bytesToHex(viewingPub) as `0x${string}`,
+    keysReused,
   };
 }
 

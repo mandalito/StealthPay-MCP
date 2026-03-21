@@ -40,49 +40,61 @@ export function registerRegisterStealthKeys(server: McpServer) {
           chain,
         });
 
-        // Save keys directly to .env — never return private keys to AI
-        const envPath = process.env.DOTENV_PATH || '.env';
-        let envContent = '';
-        if (existsSync(envPath)) {
-          envContent = readFileSync(envPath, 'utf-8');
+        const lines = [
+          `Stealth keys registered for **${result.name}**`,
+          '',
+          `Tx: ${explorerTxUrl(chain, result.txHash)}`,
+          `Stealth meta-address: \`${result.stealthMetaAddress}\``,
+        ];
+
+        if (result.keysReused) {
+          // Same keys as before — no need to update .env
+          lines.push(
+            '',
+            `♻️ Reused existing stealth keys — same identity across all your ENS names.`,
+            `✅ /stealthpay-scan and /stealthpay-withdraw work for all names with one set of keys.`,
+          );
+        } else {
+          // First time — save keys to .env
+          const envPath = process.env.DOTENV_PATH || '.env';
+          let envContent = '';
+          if (existsSync(envPath)) {
+            envContent = readFileSync(envPath, 'utf-8');
+          }
+
+          const setEnvVar = (content: string, key: string, value: string): string => {
+            const regex = new RegExp(`^${key}=.*$`, 'm');
+            if (regex.test(content)) {
+              return content.replace(regex, `${key}=${value}`);
+            }
+            return content.trimEnd() + `\n${key}=${value}\n`;
+          };
+
+          envContent = setEnvVar(envContent, 'RECIPIENT_SPENDING_PRIVATE_KEY', result.spendingPrivateKey);
+          envContent = setEnvVar(envContent, 'RECIPIENT_SPENDING_PUBLIC_KEY', result.spendingPublicKey);
+          envContent = setEnvVar(envContent, 'RECIPIENT_VIEWING_PRIVATE_KEY', result.viewingPrivateKey);
+          envContent = setEnvVar(envContent, 'RECIPIENT_VIEWING_PUBLIC_KEY', result.viewingPublicKey);
+
+          writeFileSync(envPath, envContent);
+
+          process.env.RECIPIENT_SPENDING_PRIVATE_KEY = result.spendingPrivateKey;
+          process.env.RECIPIENT_SPENDING_PUBLIC_KEY = result.spendingPublicKey;
+          process.env.RECIPIENT_VIEWING_PRIVATE_KEY = result.viewingPrivateKey;
+          process.env.RECIPIENT_VIEWING_PUBLIC_KEY = result.viewingPublicKey;
+
+          lines.push(
+            '',
+            `✅ Keys saved to \`${envPath}\` automatically.`,
+            `✅ /stealthpay-scan and /stealthpay-withdraw are ready to use (no restart needed).`,
+          );
         }
 
-        // Helper to set or update an env var in the file
-        const setEnvVar = (content: string, key: string, value: string): string => {
-          const regex = new RegExp(`^${key}=.*$`, 'm');
-          if (regex.test(content)) {
-            return content.replace(regex, `${key}=${value}`);
-          }
-          return content.trimEnd() + `\n${key}=${value}\n`;
-        };
-
-        envContent = setEnvVar(envContent, 'RECIPIENT_SPENDING_PRIVATE_KEY', result.spendingPrivateKey);
-        envContent = setEnvVar(envContent, 'RECIPIENT_SPENDING_PUBLIC_KEY', result.spendingPublicKey);
-        envContent = setEnvVar(envContent, 'RECIPIENT_VIEWING_PRIVATE_KEY', result.viewingPrivateKey);
-        envContent = setEnvVar(envContent, 'RECIPIENT_VIEWING_PUBLIC_KEY', result.viewingPublicKey);
-
-        writeFileSync(envPath, envContent);
-
-        // Also set in current process so tools work without restart
-        process.env.RECIPIENT_SPENDING_PRIVATE_KEY = result.spendingPrivateKey;
-        process.env.RECIPIENT_SPENDING_PUBLIC_KEY = result.spendingPublicKey;
-        process.env.RECIPIENT_VIEWING_PRIVATE_KEY = result.viewingPrivateKey;
-        process.env.RECIPIENT_VIEWING_PUBLIC_KEY = result.viewingPublicKey;
+        lines.push('', `Anyone can now send stealth payments to ${result.name}.`);
 
         return {
           content: [{
             type: 'text' as const,
-            text: [
-              `Stealth keys registered for **${result.name}**`,
-              '',
-              `Tx: ${explorerTxUrl(chain, result.txHash)}`,
-              `Stealth meta-address: \`${result.stealthMetaAddress}\``,
-              '',
-              `✅ Keys saved to \`${envPath}\` automatically.`,
-              `✅ /stealthpay-scan and /stealthpay-withdraw are ready to use (no restart needed).`,
-              '',
-              `Anyone can now send stealth payments to ${result.name}.`,
-            ].join('\n'),
+            text: lines.join('\n'),
           }],
         };
       } catch (error) {
