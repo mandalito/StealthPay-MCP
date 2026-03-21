@@ -4,6 +4,11 @@
   "description": "MCP server that gives AI agents the ability to make private payments using ENS identity and stealth addresses",
   "type": "module",
   "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./lib": "./dist/lib/index.js",
+    "./config": "./dist/config.js"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
