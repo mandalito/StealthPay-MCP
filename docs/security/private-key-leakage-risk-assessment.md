@@ -1,6 +1,7 @@
 # Private Key Leakage Risk Assessment
 
-Generated: 2026-03-21T17:31:00+01:00  
+Generated: 2026-03-21T17:31:00+01:00
+Updated: 2026-03-21
 Branch: `main`
 
 ## Scope
@@ -15,32 +16,36 @@ Agent and MCP flows should never expose private keys (sender keys, recipient spe
 
 ## Compliance Status
 
-**Not fully compliant (High risk).**
+**Compliant.**
 
-## Findings
+## Original Findings & Remediation
 
-1. `derive-stealth-key` accepts private keys as optional input and returns the derived stealth private key in tool output.
-2. `withdraw-from-stealth` requires `stealthPrivateKey` as tool input, which can expose secrets in client traces.
-3. `scan-announcements` still allows optional explicit `viewingPrivateKey` input (even if env defaults exist).
-4. `test/register-e2e.ts` prints generated spending/viewing private keys to stdout.
+| # | Finding | Severity | Remediation | Status |
+|---|---------|----------|-------------|--------|
+| 1 | `derive-stealth-key` accepts private keys as input and returns stealth private key in output | High | Tool removed from registered MCP tools. Lib function retained for internal use by `claim-stealth-payment`. | ✅ Fixed |
+| 2 | `withdraw-from-stealth` requires `stealthPrivateKey` as tool input | High | Tool removed from registered MCP tools. `claim-stealth-payment` handles derive+withdraw internally. | ✅ Fixed |
+| 3 | `scan-announcements` allows optional explicit `viewingPrivateKey` input | Medium | Removed key params from input schema. Keys read from env vars only. | ✅ Fixed |
+| 4 | `test/register-e2e.ts` prints private keys to stdout | Low | Gated behind `DEBUG=true` flag. | ✅ Fixed |
 
-## Positive Controls Already Present
+## Current Controls
 
 - `.env` is gitignored and not tracked.
 - `.local/` is gitignored for local probes/SDK clones.
-- `claim-stealth-payment` derives + withdraws using local env keys without returning private keys.
-- `register-stealth-keys` persists keys locally in `.env` for recipient flows.
+- `claim-stealth-payment` derives + withdraws using env keys without returning private keys to AI.
+- `register-stealth-keys` persists keys locally in `.env` — never returns them in tool output.
+- `scan-announcements` reads keys from env only — no key params in input schema.
+- `generate-wallet` saves key to `.env` — returns only the address.
+- `derive-stealth-key` and `withdraw-from-stealth` are no longer registered as MCP tools.
+- E2E test key output gated behind `DEBUG=true`.
 
-## Immediate Operating Guidance (Hackathon)
+## Remaining Tools That Handle Secrets (Server-Side Only)
 
-1. Use `claim-stealth-payment` for claiming funds; avoid `derive-stealth-key` and `withdraw-from-stealth` in normal operations.
-2. Do not pass key parameters in MCP prompts or tool arguments.
-3. Keep all recipient/sender secrets only in local `.env`.
-4. If any key appears in logs/chat/output, rotate keys immediately and treat as a security incident.
+| Tool | Secret | How handled |
+|------|--------|-------------|
+| `send-stealth-payment` | `SENDER_PRIVATE_KEY` | Read from env, signs tx internally |
+| `register-ens-name` | `SENDER_PRIVATE_KEY` | Read from env, signs tx internally |
+| `register-stealth-keys` | `SENDER_PRIVATE_KEY` + generates keys | Read from env, saves to env, never returned |
+| `scan-announcements` | `RECIPIENT_VIEWING_PRIVATE_KEY` | Read from env only |
+| `claim-stealth-payment` | `RECIPIENT_SPENDING/VIEWING_PRIVATE_KEY` | Read from env, derives + withdraws internally |
 
-## Remediation Backlog
-
-1. Remove private-key fields from MCP input schemas where possible.
-2. Stop returning private keys in tool responses; return only non-sensitive references/status.
-3. Convert recipient flows to env-only server-side key usage.
-4. Remove key-printing behavior from e2e scripts, or gate behind explicit local debug flags.
+All secrets stay within the Node.js process boundary.

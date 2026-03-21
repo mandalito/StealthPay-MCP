@@ -91,11 +91,15 @@ async function main() {
   console.log('\n╔══════════════════════════════════════════════════════════════╗');
   console.log('║         Registration + Stealth Keys complete!               ║');
   console.log('╚══════════════════════════════════════════════════════════════╝');
-  console.log(`
+  if (process.env.DEBUG === 'true') {
+    console.log(`
   SAVE THESE KEYS:
   Spending private key: ${keysResult.spendingPrivateKey}
   Viewing private key:  ${keysResult.viewingPrivateKey}
-  `);
+    `);
+  } else {
+    console.log(`\n  Keys generated. Set DEBUG=true to print them to stdout.`);
+  }
 }
 
 main().catch((e) => {

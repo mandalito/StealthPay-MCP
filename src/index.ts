@@ -6,8 +6,6 @@ import { registerGenerateStealthAddress } from './tools/generate-stealth-address
 import { registerSendStealthPayment } from './tools/send-stealth-payment.js';
 import { registerCreatePaymentLink } from './tools/create-payment-link.js';
 import { registerScanAnnouncements } from './tools/scan-announcements.js';
-import { registerDeriveStealthKey } from './tools/derive-stealth-key.js';
-import { registerWithdrawFromStealth } from './tools/withdraw-from-stealth.js';
 import { registerRegisterEnsName } from './tools/register-ens-name.js';
 import { registerRegisterStealthKeys } from './tools/register-stealth-keys.js';
 import { registerGetMyProfile } from './tools/get-my-profile.js';
@@ -40,8 +38,6 @@ registerCreatePaymentLink(server);
 
 // Register all tools — recipient side
 registerScanAnnouncements(server);
-registerDeriveStealthKey(server);
-registerWithdrawFromStealth(server);
 registerClaimStealthPayment(server);
 
 // Start the server

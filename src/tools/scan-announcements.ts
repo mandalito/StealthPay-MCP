@@ -10,16 +10,8 @@ export function registerScanAnnouncements(server: McpServer) {
     {
       title: 'Scan Stealth Announcements',
       description:
-        'Scan ERC-5564 announcements to discover stealth payments for a recipient. Uses RECIPIENT_VIEWING_PRIVATE_KEY and RECIPIENT_SPENDING_PUBLIC_KEY from environment by default (keys never exposed to AI). Override with explicit parameters if scanning for someone else.',
+        'Scan ERC-5564 announcements to discover stealth payments for a recipient. Uses RECIPIENT_VIEWING_PRIVATE_KEY and RECIPIENT_SPENDING_PUBLIC_KEY from environment — keys never pass through AI.',
       inputSchema: z.object({
-        viewingPrivateKey: z
-          .string()
-          .optional()
-          .describe('Viewing private key (0x-prefixed hex). Defaults to RECIPIENT_VIEWING_PRIVATE_KEY env var.'),
-        spendingPublicKey: z
-          .string()
-          .optional()
-          .describe('Spending public key (0x-prefixed compressed hex). Defaults to RECIPIENT_SPENDING_PUBLIC_KEY env var.'),
         chain: z
           .string()
           .default(DEFAULT_CHAIN)
@@ -34,17 +26,17 @@ export function registerScanAnnouncements(server: McpServer) {
           .describe('End block number (defaults to latest)'),
       }),
     },
-    async ({ viewingPrivateKey, spendingPublicKey, chain, fromBlock, toBlock }) => {
+    async ({ chain, fromBlock, toBlock }) => {
       try {
-        const resolvedViewingKey = viewingPrivateKey || process.env.RECIPIENT_VIEWING_PRIVATE_KEY;
-        const resolvedSpendingPub = spendingPublicKey || process.env.RECIPIENT_SPENDING_PUBLIC_KEY;
+        const viewingKey = process.env.RECIPIENT_VIEWING_PRIVATE_KEY;
+        const spendingPub = process.env.RECIPIENT_SPENDING_PUBLIC_KEY;
 
-        if (!resolvedViewingKey || !resolvedSpendingPub) {
+        if (!viewingKey || !spendingPub) {
           return {
             content: [
               {
                 type: 'text' as const,
-                text: 'Missing keys. Either set RECIPIENT_VIEWING_PRIVATE_KEY and RECIPIENT_SPENDING_PUBLIC_KEY in your .env file, or provide them as parameters.',
+                text: 'Missing keys. Set RECIPIENT_VIEWING_PRIVATE_KEY and RECIPIENT_SPENDING_PUBLIC_KEY in your .env file and restart the MCP server.',
               },
             ],
             isError: true,
@@ -52,8 +44,8 @@ export function registerScanAnnouncements(server: McpServer) {
         }
 
         const payments = await scanAnnouncements({
-          viewingPrivateKey: (resolvedViewingKey.startsWith('0x') ? resolvedViewingKey : `0x${resolvedViewingKey}`) as `0x${string}`,
-          spendingPublicKey: (resolvedSpendingPub.startsWith('0x') ? resolvedSpendingPub : `0x${resolvedSpendingPub}`) as `0x${string}`,
+          viewingPrivateKey: (viewingKey.startsWith('0x') ? viewingKey : `0x${viewingKey}`) as `0x${string}`,
+          spendingPublicKey: (spendingPub.startsWith('0x') ? spendingPub : `0x${spendingPub}`) as `0x${string}`,
           chain,
           fromBlock: fromBlock ? BigInt(fromBlock) : undefined,
           toBlock: toBlock ? BigInt(toBlock) : undefined,
@@ -80,7 +72,6 @@ export function registerScanAnnouncements(server: McpServer) {
           lines.push(`Stealth address: \`${p.stealthAddress}\``);
           if (p.token && p.amount !== null) {
             lines.push(`Token: \`${p.token}\``);
-            // Try to format assuming 18 decimals, fall back to raw
             try {
               lines.push(`Amount: ${formatUnits(p.amount, 18)} (raw: ${p.amount})`);
             } catch {
