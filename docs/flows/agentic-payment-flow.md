@@ -14,9 +14,9 @@
 
 ## Recipient Flow
 
-1. Call `scan-announcements(viewingPrivateKey, spendingPublicKey, ...)`.
-2. For each match, call `derive-stealth-key(...)`.
-3. Call `withdraw-from-stealth(...)`.
+1. Call `scan-announcements(chain, fromBlock?, toBlock?)`.
+2. For each match, call `claim-stealth-payment(ephemeralPublicKey, to, token, amount?, chain?)`.
+3. Funds are transferred without exposing recipient private keys in MCP inputs/outputs.
 
 ## Hackathon Testnet
 

@@ -1,5 +1,13 @@
 # Documentation Changelog
 
+## v0.13.0 - 2026-03-21T17:58:17+01:00
+
+- Added README security best-practice guidance to keep private keys out of chat/tool inputs and use env-only claim flows.
+- Reconciled P0 documentation drift across examples/flows/specs to match the current 11 registered MCP endpoints.
+- Updated network and endpoint testing docs to align with current recipient flow (`scan-announcements` + `claim-stealth-payment`).
+- Added/updated deterministic test guidance and endpoint-surface guard references in testing docs.
+- Updated `docs/TODO.md` status to mark completed P0/P2 items and keep remaining backlog focused.
+
 ## v0.12.0 - 2026-03-21T17:32:46+01:00
 
 - Reviewed colleague security-fix commit (`91659d6`) and updated security assessment with verification status, timestamp, and residual-risk notes.

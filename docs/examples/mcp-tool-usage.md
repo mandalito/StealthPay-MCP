@@ -56,36 +56,31 @@
 {
   "tool": "scan-announcements",
   "input": {
-    "viewingPrivateKey": "0x...",
-    "spendingPublicKey": "0x...",
     "chain": "sepolia"
   }
 }
 ```
 
-## `derive-stealth-key`
+Notes:
+
+- `scan-announcements` reads `RECIPIENT_VIEWING_PRIVATE_KEY` and `RECIPIENT_SPENDING_PUBLIC_KEY` from `.env`.
+- No private key inputs are accepted in this tool schema.
+
+## `claim-stealth-payment`
 
 ```json
 {
-  "tool": "derive-stealth-key",
+  "tool": "claim-stealth-payment",
   "input": {
-    "spendingPrivateKey": "0x...",
-    "viewingPrivateKey": "0x...",
-    "ephemeralPublicKey": "0x..."
-  }
-}
-```
-
-## `withdraw-from-stealth`
-
-```json
-{
-  "tool": "withdraw-from-stealth",
-  "input": {
-    "stealthPrivateKey": "0x...",
+    "ephemeralPublicKey": "0x02...",
     "to": "0xabc...",
     "token": "ETH",
     "chain": "sepolia"
   }
 }
 ```
+
+Notes:
+
+- `claim-stealth-payment` uses recipient keys from local `.env`.
+- Derivation + withdrawal happen server-side; private keys are not returned in tool output.

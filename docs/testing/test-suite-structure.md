@@ -16,6 +16,7 @@ are executable scenario scripts, not Vitest unit test files.
 
 - deterministic automated tests run by Vitest
 - include unit tests and MCP tool-contract tests
+- include a tool-surface guard (`test/tools/registered-tools.test.ts`) to ensure only allowed MCP endpoints are registered
 - suitable for default CI/local regression checks
 
 ### `*-e2e.ts` files
@@ -33,4 +34,5 @@ are executable scenario scripts, not Vitest unit test files.
 ## Recommended Usage
 
 1. Keep endpoint/unit tests (`*.test.ts`) as mandatory regression baseline.
-2. Run E2E scripts when validating real Sepolia flows or integration readiness.
+2. Keep endpoint tests aligned to currently registered tools from `src/index.ts`.
+3. Run E2E scripts when validating real Sepolia flows or integration readiness.

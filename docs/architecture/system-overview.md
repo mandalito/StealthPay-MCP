@@ -20,8 +20,7 @@
 
 1. Scan announcements.
 2. Filter and match recipient keys.
-3. Derive stealth private key.
-4. Withdraw funds.
+3. Claim payment via `claim-stealth-payment` (derivation + withdrawal happen server-side).
 
 ## Infrastructure
 

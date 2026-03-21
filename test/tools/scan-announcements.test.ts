@@ -63,4 +63,27 @@ describe('tool:scan-announcements', () => {
     expect(result.content[0].text).toContain('Tx: https://');
     expect(result.content[0].text).toContain('0xscan');
   });
+
+  it('uses env keys even if caller tries to pass key-like fields', async () => {
+    process.env.RECIPIENT_VIEWING_PRIVATE_KEY = '11'.repeat(32);
+    process.env.RECIPIENT_SPENDING_PUBLIC_KEY = '02' + '22'.repeat(32);
+
+    scanAnnouncementsMock.mockResolvedValue([]);
+
+    const { handler } = registerAndGetTool(registerScanAnnouncements, 'scan-announcements');
+    const result = await handler({
+      chain: 'sepolia',
+      // Extra fields are ignored by the tool contract. This asserts no user-provided key override path.
+      viewingPrivateKey: '0x' + 'aa'.repeat(32),
+      spendingPublicKey: '0x' + '02' + 'bb'.repeat(32),
+    } as any);
+
+    expect(result.isError).toBeUndefined();
+    expect(scanAnnouncementsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        viewingPrivateKey: '0x' + '11'.repeat(32),
+        spendingPublicKey: '0x' + '02' + '22'.repeat(32),
+      }),
+    );
+  });
 });

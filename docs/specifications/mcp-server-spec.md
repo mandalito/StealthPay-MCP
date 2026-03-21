@@ -2,6 +2,33 @@
 
 ## Registered Tools
 
+### Identity
+
+#### `get-my-profile`
+
+Behavior:
+
+- reads sender wallet context from env
+- reports wallet, ENS profile context, and recipient-key configuration status
+
+#### `generate-wallet`
+
+Behavior:
+
+- generates a new local wallet
+- writes `SENDER_PRIVATE_KEY` to local `.env` when not already set
+- returns address only (no private key in output)
+
+#### `get-balances`
+
+Input:
+
+- `chain` (optional, defaults to `DEFAULT_CHAIN`)
+
+Behavior:
+
+- shows native/token balances for sender wallet on selected chain
+
 ### Onboarding
 
 #### `register-ens-name`
@@ -28,7 +55,8 @@ Behavior:
 
 - generates spending/viewing keypairs
 - writes ENS text record key `stealth-meta-address`
-- returns generated key material in tool output
+- stores generated recipient keys in local `.env`
+- does not return private keys in tool output
 
 ### Sender
 
@@ -67,7 +95,7 @@ Behavior:
 
 - resolves stealth meta-address
 - generates one-time stealth address
-- sends ERC-20 transfer
+- sends ETH or ERC-20 transfer
 - announces through ERC-5564 announcer
 
 Note:
@@ -94,8 +122,6 @@ Behavior:
 
 Input:
 
-- `viewingPrivateKey`
-- `spendingPublicKey`
 - `chain` (optional)
 - `fromBlock` (optional)
 - `toBlock` (optional)
@@ -104,26 +130,15 @@ Behavior:
 
 - scans ERC-5564 `Announcement` events
 - filters by view tag + full stealth address check
+- reads recipient keys from environment only:
+  - `RECIPIENT_VIEWING_PRIVATE_KEY`
+  - `RECIPIENT_SPENDING_PUBLIC_KEY`
 
-#### `derive-stealth-key`
+#### `claim-stealth-payment`
 
 Input:
 
-- `spendingPrivateKey`
-- `viewingPrivateKey`
 - `ephemeralPublicKey`
-- `expectedAddress` (optional)
-
-Behavior:
-
-- derives stealth private key and address
-- optionally verifies against expected address
-
-#### `withdraw-from-stealth`
-
-Input:
-
-- `stealthPrivateKey`
 - `to`
 - `token` (`ETH` or ERC-20 address)
 - `amount` (optional)
@@ -131,7 +146,8 @@ Input:
 
 Behavior:
 
-- sends ETH or ERC-20 transfer from stealth address
+- derives stealth private key server-side using env recipient keys
+- withdraws ETH or ERC-20 from stealth address to destination
 - requires ETH on stealth address to pay gas
 
 ## Response Format

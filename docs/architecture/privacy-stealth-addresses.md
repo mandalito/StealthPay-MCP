@@ -12,9 +12,8 @@ StealthPay uses ERC-5564-style stealth addressing logic implemented in `src/lib/
 
 ## Recipient Recovery Model
 
-- scan announcements with viewing private key + spending public key
-- derive stealth private key from spending/viewing private keys + ephemeral public key
-- withdraw from stealth address
+- scan announcements using env-configured recipient keys
+- claim with `claim-stealth-payment` (derive + withdraw server-side)
 
 ## Known Limitations
 

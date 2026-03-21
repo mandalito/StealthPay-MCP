@@ -10,7 +10,7 @@ In scope:
 
 - ENS onboarding tools (`register-ens-name`, `register-stealth-keys`)
 - sender tools (`get-payment-profile`, `generate-stealth-address`, `send-stealth-payment`, `create-payment-link`)
-- recipient tools (`scan-announcements`, `derive-stealth-key`, `withdraw-from-stealth`)
+- recipient tools (`scan-announcements`, `claim-stealth-payment`)
 - Sepolia-first hackathon execution for registration and end-to-end testing
 
 Out of scope (hackathon MVP):
@@ -33,6 +33,6 @@ Out of scope (hackathon MVP):
 
 ## Acceptance Criteria (Current)
 
-- MCP server boots and registers 9 tools.
+- MCP server boots and registers 11 tools.
 - Unit tests for stealth math and payment links pass.
-- Recipient-side flow (`scan-announcements` + `derive-stealth-key` + `withdraw-from-stealth`) is documented and callable.
+- Recipient-side flow (`scan-announcements` + `claim-stealth-payment`) is documented and callable.

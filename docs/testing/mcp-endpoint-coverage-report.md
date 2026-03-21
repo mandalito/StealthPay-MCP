@@ -1,6 +1,6 @@
 # MCP Endpoint Coverage Report
 
-Generated: 2026-03-21T16:26:50+01:00
+Generated: 2026-03-21T17:57:24+01:00
 Branch: main
 
 ## Scope
@@ -19,15 +19,13 @@ Audit of test alignment between currently registered MCP tools and `test/` suite
 8. `send-stealth-payment`
 9. `create-payment-link`
 10. `scan-announcements`
-11. `derive-stealth-key`
-12. `withdraw-from-stealth`
-13. `claim-stealth-payment`
+11. `claim-stealth-payment`
 
 ## Alignment Status
 
 Before this pass, coverage was mostly at lib/E2E level (`stealth.test.ts`, `payments.test.ts`, integration scripts) and did not systematically validate MCP tool handlers.
 
-After this pass, each MCP endpoint has a dedicated unit test file:
+Current deterministic MCP endpoint test files:
 
 - `test/tools/get-my-profile.test.ts`
 - `test/tools/generate-wallet.test.ts`
@@ -39,13 +37,12 @@ After this pass, each MCP endpoint has a dedicated unit test file:
 - `test/tools/send-stealth-payment.test.ts`
 - `test/tools/create-payment-link.test.ts`
 - `test/tools/scan-announcements.test.ts`
-- `test/tools/derive-stealth-key.test.ts`
-- `test/tools/withdraw-from-stealth.test.ts`
 - `test/tools/claim-stealth-payment.test.ts`
+- `test/tools/registered-tools.test.ts` (ensures only allowed endpoints are registered and key-bearing legacy tools stay unregistered)
 
 ## Regression Coverage Added
 
-A dedicated regression test now guards ENS registration receipt handling:
+A dedicated regression test guards ENS registration receipt handling:
 
 - `test/ens-register.receipt.test.ts`
 
@@ -68,8 +65,9 @@ Yes, a Sepolia fork is a good next layer for catching production-like bugs earli
 Recommended strategy:
 
 1. Keep `test/tools/*` as fast deterministic contract tests (run on every change).
-2. Add fork-backed integration tests for transaction-heavy paths (`register-ens-name`, `register-stealth-keys`, `send-stealth-payment`, `claim-stealth-payment`).
-3. Run fork tests in CI on demand (or nightly), not on every commit.
+2. Keep `test/tools/registered-tools.test.ts` as a policy guard against accidental re-registration of forbidden key-bearing endpoints.
+3. Add fork-backed integration tests for transaction-heavy paths (`register-ens-name`, `register-stealth-keys`, `send-stealth-payment`, `claim-stealth-payment`).
+4. Run fork tests in CI on demand (or nightly), not on every commit.
 
 Benefits:
 

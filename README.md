@@ -14,8 +14,8 @@ Sender (AI agent)                         Recipient
 3. Send tokens to stealth address         ← on-chain transfer
 4. Announce via ERC-5564                  ← so recipient can discover it
                                           5. Scan announcements → find payment
-                                          6. Derive private key → control funds
-                                          7. Withdraw to any wallet
+                                          6. Claim via `claim-stealth-payment`
+                                             (derive + withdraw server-side)
 ```
 
 Nobody except the recipient can tell they received the payment. The stealth address has never appeared on-chain before and cannot be linked to their public ENS name.
@@ -60,10 +60,23 @@ ENS_CHAIN=sepolia
 
 Recipient key handling:
 
-- `register-stealth-keys` returns one spending keypair and one viewing keypair.
-- Save those values in local `.env` under `RECIPIENT_*`.
+- `register-stealth-keys` generates recipient keys and saves them directly to local `.env`.
+- Private keys are not returned through MCP output to the AI/client surface.
 - Only the stealth meta-address is written on-chain; private keys are never stored on-chain.
 - `.env` is gitignored, so these secrets stay local unless you export them elsewhere.
+
+### Security best practices (important)
+
+To minimize private-key exposure risk:
+
+1. Never paste private keys in chat, prompts, or MCP tool arguments.
+2. Keep all secrets in local `.env` only (`SENDER_PRIVATE_KEY`, `RECIPIENT_*_PRIVATE_KEY`).
+3. Use only env-based recipient flows:
+   - `scan-announcements` (env keys)
+   - `claim-stealth-payment` (derive + withdraw server-side)
+4. Do not use `DEBUG=true` in `test/register-e2e.ts` with real wallets/funds.
+5. Use dedicated low-fund hackathon wallets, not personal main wallets.
+6. If any key appears in logs/chat/history, rotate that key immediately.
 
 ### Add to Claude Code
 
@@ -108,7 +121,7 @@ Then restart Claude Code. The 11 registered tools will be available immediately.
 |------|-------------|
 | `get-payment-profile` | Resolve ENS name → address, avatar, preferred chain/token, stealth meta-address |
 | `generate-stealth-address` | Generate a one-time stealth address from an ENS name |
-| `send-stealth-payment` | Send stablecoins to a stealth address + announce via ERC-5564 |
+| `send-stealth-payment` | Send ETH / stablecoins / ERC-20 to a stealth address + announce via ERC-5564 |
 | `create-payment-link` | Generate a shareable payment link |
 
 ### Receiving payments
@@ -185,7 +198,7 @@ npm test
 # ENS integration test (reads mainnet ENS)
 npm run test:ens
 
-# Full Sepolia E2E (send → announce → scan → derive)
+# Full Sepolia E2E (send → announce → scan → claim)
 # Requires SENDER_PRIVATE_KEY with Sepolia ETH
 npm run test:e2e
 
@@ -231,9 +244,7 @@ src/
     ├── generate-wallet.ts
     ├── get-balances.ts
     ├── scan-announcements.ts
-    ├── claim-stealth-payment.ts
-    ├── derive-stealth-key.ts      # legacy helper, not registered as MCP endpoint
-    └── withdraw-from-stealth.ts   # legacy helper, not registered as MCP endpoint
+    └── claim-stealth-payment.ts
 ```
 
 ## Local Helpers (`.local/`)
@@ -265,7 +276,6 @@ These scripts are not part of the production server and are not committed.
 ## Known limitations
 
 - **Token-only stealth account cannot withdraw without native gas**: If a stealth account receives non-native tokens but has `0` native ETH, withdrawal fails until gas is funded. Gasless/paymaster is not in hackathon MVP scope.
-- **Legacy key-handling files still exist in source**: `derive-stealth-key.ts` and `withdraw-from-stealth.ts` remain in the repository for internal/library compatibility, but are not registered MCP endpoints.
 - **Sepolia stablecoin send path**: `send-stealth-payment` uses the `STABLECOINS` config map; unsupported token addresses require config updates before use.
 - **Hoodi testnet status**: Chain config exists, but production-grade ERC-5564/6538 readiness remains unvalidated for this repo.
 - **Metadata format compatibility**: Scanner parsing assumes this project's metadata conventions; other ERC-5564 senders may encode differently.
@@ -273,7 +283,6 @@ These scripts are not part of the production server and are not committed.
 ## Future improvements
 
 - Add ERC-4337/paymaster withdrawal flow so stealth accounts can move token-only balances without pre-funding native gas.
-- Replace key-exposing recipient flows with strict server-side claim operations only (no secret-bearing tool inputs/outputs).
 - Add `send-stealth-payment` mode for unsigned payload generation (`build_unsigned_tx`) in addition to direct execution.
 - Improve scan performance/reliability with indexed backends (subgraph/indexer) and rate-limit-aware pagination.
 - Complete Umbra SDK integration path where it improves maintainability without breaking current ERC-5564/6538 behavior.

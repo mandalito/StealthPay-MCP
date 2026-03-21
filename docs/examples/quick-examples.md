@@ -4,7 +4,7 @@
 
 - register ENS name on Sepolia
 - set stealth keys with `register-stealth-keys`
-- copy returned spending/viewing keys into local `.env` (`RECIPIENT_*`)
+- confirm recipient keys were written to local `.env` (`RECIPIENT_*`)
 - verify profile with `get-payment-profile`
 
 ## Example 2: Send a Private Payment
@@ -16,5 +16,4 @@
 ## Example 3: Recipient Claims Funds
 
 - discover incoming payments with `scan-announcements`
-- derive control key with `derive-stealth-key`
-- transfer out via `withdraw-from-stealth`
+- claim via `claim-stealth-payment` (derive + withdraw server-side)
