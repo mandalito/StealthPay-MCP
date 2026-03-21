@@ -51,6 +51,7 @@ Underlying onchain pieces in scope:
 - [Product Specification](docs/specifications/product-spec.md)
 - [MCP Server Specification](docs/specifications/mcp-server-spec.md)
 - [Payment Profile Schema](docs/specifications/payment-profile-schema.md)
+- [ENS Text Record Keys](docs/specifications/ens-text-record-keys.md)
 - [MCP Composition](docs/architecture/mcp-composition.md)
 - [System Overview](docs/architecture/system-overview.md)
 - [Agentic Payment Flow](docs/flows/agentic-payment-flow.md)

@@ -1,5 +1,10 @@
 # Documentation Changelog
 
+## v0.3.0 - 2026-03-21T12:20:57+01:00
+
+- Added a concrete ENS text-record freeze proposal in `docs/specifications/ens-text-record-keys.md`.
+- Linked payment profile mapping to the canonical ENS key specification.
+
 ## v0.2.0 - 2026-03-21T12:06:48+01:00
 
 - Updated documentation to the composed architecture: Umbra Protocol SDK + ENS MCP + EVM MCP.

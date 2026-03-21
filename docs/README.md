@@ -11,6 +11,7 @@ docs/
   specifications/
     product-spec.md
     mcp-server-spec.md
+    ens-text-record-keys.md
     payment-profile-schema.md
   architecture/
     mcp-composition.md

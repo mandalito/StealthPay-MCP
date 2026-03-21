@@ -32,12 +32,8 @@ Define a machine-readable payment profile derived from ENS data and consumed by 
 
 ## ENS Mapping (Proposed for Hackathon)
 
-- `stealthpay.preferred_chains`: comma-separated chain identifiers
-- `stealthpay.preferred_tokens`: comma-separated token symbols
-- `stealthpay.privacy_mode`: `public|stealth_preferred|stealth_required`
-- `stealthpay.gasless_preference`: `disabled|preferred`
-- `stealthpay.profile_version`: schema version marker
-- stealth meta-address source: ENS text record and/or ERC-6538 registry
+- canonical key set: [ENS Text Record Keys](ens-text-record-keys.md)
+- stealth meta-address source: ENS resolver data and/or ERC-6538 registry
 
 ## Validation Rules (Draft)
 
