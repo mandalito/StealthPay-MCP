@@ -13,6 +13,7 @@ import { registerRegisterStealthKeys } from './tools/register-stealth-keys.js';
 import { registerGetMyProfile } from './tools/get-my-profile.js';
 import { registerClaimStealthPayment } from './tools/claim-stealth-payment.js';
 import { registerGenerateWallet } from './tools/generate-wallet.js';
+import { registerGetBalances } from './tools/get-balances.js';
 
 // Load .env from DOTENV_PATH if set, otherwise default location
 config({ path: process.env.DOTENV_PATH });
@@ -25,6 +26,7 @@ const server = new McpServer({
 // Register all tools — identity
 registerGetMyProfile(server);
 registerGenerateWallet(server);
+registerGetBalances(server);
 
 // Register all tools — onboarding
 registerRegisterEnsName(server);

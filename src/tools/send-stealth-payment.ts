@@ -2,8 +2,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { getStealthMetaAddress } from '../lib/ens.js';
 import { generateStealthAddress } from '../lib/stealth.js';
-import { sendStablecoin } from '../lib/payments.js';
-import { SUPPORTED_CHAINS, DEFAULT_CHAIN } from '../config.js';
+import { sendToStealth } from '../lib/payments.js';
+import { SUPPORTED_CHAINS, DEFAULT_CHAIN, explorerTxUrl } from '../config.js';
 
 export function registerSendStealthPayment(server: McpServer) {
   server.registerTool(
@@ -11,14 +11,14 @@ export function registerSendStealthPayment(server: McpServer) {
     {
       title: 'Send Stealth Payment',
       description:
-        'Send a private stablecoin payment to an ENS name using a stealth address. Generates a one-time address, sends the tokens, and announces the payment via ERC-5564 so the recipient can discover it.',
+        'Send a private payment to an ENS name using a stealth address. Supports native ETH, known stablecoins (USDC, USDT, DAI), or any ERC-20 by contract address. Generates a one-time address, sends the funds, and announces via ERC-5564.',
       inputSchema: z.object({
         to: z.string().describe('Recipient ENS name (e.g. "vitalik.eth")'),
-        amount: z.string().describe('Amount to send (e.g. "100.00")'),
+        amount: z.string().describe('Amount to send (e.g. "0.01" or "100.00")'),
         token: z
           .string()
-          .default('USDC')
-          .describe('Stablecoin symbol (default: USDC)'),
+          .default('ETH')
+          .describe('Token: "ETH" for native, a symbol like "USDC", or a 0x ERC-20 contract address (default: ETH)'),
         chain: z
           .string()
           .default(DEFAULT_CHAIN)
@@ -27,14 +27,13 @@ export function registerSendStealthPayment(server: McpServer) {
     },
     async ({ to, amount, token, chain }) => {
       try {
-        // 0. Check for sender private key
         const rawKey = process.env.SENDER_PRIVATE_KEY;
         if (!rawKey) {
           return {
             content: [
               {
                 type: 'text' as const,
-                text: 'SENDER_PRIVATE_KEY environment variable is not set. Set it to the sender wallet\'s private key to enable payments.',
+                text: 'SENDER_PRIVATE_KEY environment variable is not set. Add it to your .env file and restart the MCP server.',
               },
             ],
             isError: true,
@@ -59,8 +58,8 @@ export function registerSendStealthPayment(server: McpServer) {
         // 2. Generate one-time stealth address
         const stealth = generateStealthAddress(metaAddress);
 
-        // 3. Send stablecoin + announce via ERC-5564
-        const { transferTxHash, announceTxHash, announceFailed } = await sendStablecoin({
+        // 3. Send funds + announce via ERC-5564
+        const { transferTxHash, announceTxHash, announceFailed, tokenLabel } = await sendToStealth({
           to: stealth.stealthAddress as `0x${string}`,
           amount,
           token,
@@ -73,10 +72,10 @@ export function registerSendStealthPayment(server: McpServer) {
         const lines = [
           `Stealth payment sent to **${to}**`,
           ``,
-          `Amount: ${amount} ${token.toUpperCase()}`,
+          `Amount: ${amount} ${tokenLabel}`,
           `Chain: ${chain}`,
           `Stealth address: \`${stealth.stealthAddress}\``,
-          `Transfer tx: \`${transferTxHash}\``,
+          `Transfer tx: ${explorerTxUrl(chain, transferTxHash)}`,
         ];
 
         if (announceFailed) {
@@ -89,7 +88,7 @@ export function registerSendStealthPayment(server: McpServer) {
             `View tag: \`${stealth.viewTag}\``,
           );
         } else {
-          lines.push(`Announcement tx: \`${announceTxHash}\``);
+          lines.push(`Announcement tx: ${explorerTxUrl(chain, announceTxHash!)}`);
         }
 
         lines.push(
@@ -98,12 +97,7 @@ export function registerSendStealthPayment(server: McpServer) {
         );
 
         return {
-          content: [
-            {
-              type: 'text' as const,
-              text: lines.join('\n'),
-            },
-          ],
+          content: [{ type: 'text' as const, text: lines.join('\n') }],
         };
       } catch (error) {
         return {

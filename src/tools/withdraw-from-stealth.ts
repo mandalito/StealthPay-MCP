@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { withdrawFromStealth } from '../lib/withdraw.js';
-import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from '../config.js';
+import { DEFAULT_CHAIN, SUPPORTED_CHAINS, explorerTxUrl } from '../config.js';
 
 export function registerWithdrawFromStealth(server: McpServer) {
   server.registerTool(
@@ -50,7 +50,7 @@ export function registerWithdrawFromStealth(server: McpServer) {
                 `From: \`${result.from}\` (stealth address)`,
                 `To: \`${result.to}\``,
                 `Amount: ${result.amount} ${result.token}`,
-                `Tx: \`${result.txHash}\``,
+                `Tx: ${explorerTxUrl(chain, result.txHash)}`,
                 `Chain: ${chain}`,
               ].join('\n'),
             },

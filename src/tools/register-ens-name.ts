@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { registerEnsName } from '../lib/ens-register.js';
-import { ENS_CONTRACTS } from '../config.js';
+import { ENS_CONTRACTS, explorerTxUrl } from '../config.js';
 
 export function registerRegisterEnsName(server: McpServer) {
   server.registerTool(
@@ -57,8 +57,8 @@ export function registerRegisterEnsName(server: McpServer) {
               `Owner: \`${result.owner}\``,
               `Cost: ${result.cost}`,
               `Duration: ${result.expiresIn}`,
-              `Commit tx: \`${result.commitTxHash}\``,
-              `Register tx: \`${result.registerTxHash}\``,
+              `Commit tx: ${explorerTxUrl(chain, result.commitTxHash)}`,
+              `Register tx: ${explorerTxUrl(chain, result.registerTxHash)}`,
               '',
               `Next step: use \`register-stealth-keys\` to generate and link stealth keys to this name.`,
             ].join('\n'),

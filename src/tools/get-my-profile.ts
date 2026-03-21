@@ -2,10 +2,46 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
-import { normalize } from 'viem/ens';
 import { privateKeyToAccount } from 'viem/accounts';
 import { getPaymentProfile } from '../lib/ens.js';
-import { SUPPORTED_CHAINS } from '../config.js';
+import { SUPPORTED_CHAINS, explorerAddressUrl } from '../config.js';
+
+// ENS subgraph URLs per chain
+const ENS_SUBGRAPH: Record<string, string> = {
+  ethereum: 'https://api.thegraph.com/subgraphs/name/ensdomains/ens',
+  sepolia: 'https://api.studio.thegraph.com/query/49574/enssepolia/version/latest',
+};
+
+/**
+ * Query the ENS subgraph to find all ENS names owned by an address.
+ */
+async function getEnsNamesForAddress(address: string, chainName: string): Promise<string[]> {
+  const subgraphUrl = ENS_SUBGRAPH[chainName];
+  if (!subgraphUrl) return [];
+
+  try {
+    const query = `{
+      domains(where: { owner: "${address.toLowerCase()}" }) {
+        name
+      }
+    }`;
+
+    const response = await fetch(subgraphUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!response.ok) return [];
+
+    const data = await response.json() as { data?: { domains?: Array<{ name: string }> } };
+    return (data.data?.domains ?? [])
+      .map((d) => d.name)
+      .filter((name) => name && name.endsWith('.eth'));
+  } catch {
+    return [];
+  }
+}
 
 export function registerGetMyProfile(server: McpServer) {
   server.registerTool(
@@ -13,7 +49,7 @@ export function registerGetMyProfile(server: McpServer) {
     {
       title: 'Get My Profile',
       description:
-        'Show your own wallet address, ENS name(s), and stealth payment profile. Reads SENDER_PRIVATE_KEY from environment — the key itself is never exposed.',
+        'Show your own wallet address, all ENS names you own, and stealth payment profile. Reads SENDER_PRIVATE_KEY from environment — the key itself is never exposed.',
       inputSchema: z.object({}),
     },
     async () => {
@@ -33,43 +69,65 @@ export function registerGetMyProfile(server: McpServer) {
 
         const privateKey = (rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as `0x${string}`;
         const account = privateKeyToAccount(privateKey);
+        const chainName = process.env.ENS_CHAIN || 'ethereum';
+        const chain = SUPPORTED_CHAINS[chainName] ?? mainnet;
 
-        // Reverse-resolve ENS name from address
-        const chainName = process.env.ENS_CHAIN;
-        const chain = chainName ? SUPPORTED_CHAINS[chainName] ?? mainnet : mainnet;
         const client = createPublicClient({
           chain,
           transport: http(process.env.ENS_RPC_URL),
         });
 
-        const ensName = await client.getEnsName({ address: account.address });
+        // Fetch primary ENS name and all owned names in parallel
+        const [primaryName, ownedNames] = await Promise.all([
+          client.getEnsName({ address: account.address }).catch(() => null),
+          getEnsNamesForAddress(account.address, chainName),
+        ]);
 
         const lines = [
           `**Your Wallet**`,
           ``,
           `Address: \`${account.address}\``,
+          `Explorer: ${explorerAddressUrl(chainName, account.address)}`,
         ];
 
-        if (ensName) {
-          lines.push(`ENS name: **${ensName}**`);
+        if (primaryName) {
+          lines.push(`Primary ENS: **${primaryName}**`);
+        }
 
-          // Fetch full payment profile
-          const profile = await getPaymentProfile(ensName);
+        // Show all owned names
+        if (ownedNames.length > 0) {
+          lines.push(``, `**ENS Names Owned** (${ownedNames.length}):`);
+          for (const name of ownedNames) {
+            const isPrimary = name === primaryName ? ' ← primary' : '';
+            lines.push(`- ${name}${isPrimary}`);
+          }
+        } else if (!primaryName) {
+          lines.push(``, `No ENS names found on ${chainName}.`);
+          lines.push(`Run /stealthpay-setup to register one.`);
+        }
 
-          if (profile.avatar) lines.push(`Avatar: ${profile.avatar}`);
+        // Show stealth profile for primary name
+        if (primaryName) {
+          const profile = await getPaymentProfile(primaryName);
+
+          if (profile.avatar) lines.push(``, `Avatar: ${profile.avatar}`);
           if (profile.description) lines.push(`Description: ${profile.description}`);
-          if (profile.preferredChain) lines.push(`Preferred chain: ${profile.preferredChain}`);
-          if (profile.preferredToken) lines.push(`Preferred token: ${profile.preferredToken}`);
 
           if (profile.stealthMetaAddress) {
             lines.push(``, `Stealth meta-address: \`${profile.stealthMetaAddress}\``);
             lines.push(`✅ Ready to receive stealth payments.`);
           } else {
-            lines.push(``, `⚠️ No stealth keys registered. Run /setup to enable stealth payments.`);
+            lines.push(``, `⚠️ No stealth keys registered on ${primaryName}. Run /stealthpay-setup to enable stealth payments.`);
           }
-        } else {
-          lines.push(``, `⚠️ No ENS name found for this address on ${chainName || 'mainnet'}.`);
-          lines.push(`Run /setup to register an ENS name and stealth keys.`);
+        } else if (ownedNames.length > 0) {
+          // Check stealth keys on the first owned name
+          const firstProfile = await getPaymentProfile(ownedNames[0]);
+          if (firstProfile.stealthMetaAddress) {
+            lines.push(``, `Stealth keys found on **${ownedNames[0]}**: \`${firstProfile.stealthMetaAddress}\``);
+            lines.push(`✅ Ready to receive stealth payments.`);
+          } else {
+            lines.push(``, `⚠️ No stealth keys registered on any name. Run /stealthpay-setup.`);
+          }
         }
 
         // Show which recipient keys are configured
@@ -83,7 +141,7 @@ export function registerGetMyProfile(server: McpServer) {
         lines.push(`Spending private key: ${hasSpendingPriv ? '✅ configured' : '❌ not set'}`);
 
         if (!hasViewing || !hasSpendingPub) {
-          lines.push(``, `Add these to your .env file to enable /scan and /withdraw without exposing keys to AI.`);
+          lines.push(``, `Add these to your .env file to enable /stealthpay-scan and /stealthpay-withdraw without exposing keys to AI.`);
         }
 
         return {

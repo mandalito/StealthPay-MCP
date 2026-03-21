@@ -5,16 +5,20 @@ import { ERC6538_REGISTRY, ERC6538_REGISTRY_ABI, SCHEME_ID, SUPPORTED_CHAINS } f
 
 // ENS resolution defaults to mainnet but can be overridden via ENS_CHAIN env var
 // (e.g. ENS_CHAIN=sepolia for testnet ENS names)
-function getEnsClient(): PublicClient {
-  const chainName = process.env.ENS_CHAIN;
-  const chain = chainName ? SUPPORTED_CHAINS[chainName] ?? mainnet : mainnet;
-  return createPublicClient({
-    chain,
-    transport: http(process.env.ENS_RPC_URL),
-  });
-}
+// Lazy-initialized to ensure dotenv has loaded before reading env vars
+let _ensClient: PublicClient | null = null;
 
-const ensClient = getEnsClient();
+function getEnsClient(): PublicClient {
+  if (!_ensClient) {
+    const chainName = process.env.ENS_CHAIN;
+    const chain = chainName ? SUPPORTED_CHAINS[chainName] ?? mainnet : mainnet;
+    _ensClient = createPublicClient({
+      chain,
+      transport: http(process.env.ENS_RPC_URL),
+    });
+  }
+  return _ensClient;
+}
 
 export interface PaymentProfile {
   ensName: string;
@@ -35,15 +39,15 @@ export async function getPaymentProfile(name: string): Promise<PaymentProfile> {
   // Fetch address and text records in parallel
   const [address, avatar, preferredChain, preferredToken, stealthMetaAddress, description] =
     await Promise.all([
-      ensClient.getEnsAddress({ name: normalizedName }),
-      ensClient.getEnsText({ name: normalizedName, key: 'avatar' }),
-      ensClient.getEnsText({ name: normalizedName, key: 'chain' }),
-      ensClient.getEnsText({ name: normalizedName, key: 'token' }),
-      ensClient.getEnsText({
+      getEnsClient().getEnsAddress({ name: normalizedName }),
+      getEnsClient().getEnsText({ name: normalizedName, key: 'avatar' }),
+      getEnsClient().getEnsText({ name: normalizedName, key: 'chain' }),
+      getEnsClient().getEnsText({ name: normalizedName, key: 'token' }),
+      getEnsClient().getEnsText({
         name: normalizedName,
         key: 'stealth-meta-address',
       }),
-      ensClient.getEnsText({ name: normalizedName, key: 'description' }),
+      getEnsClient().getEnsText({ name: normalizedName, key: 'description' }),
     ]);
 
   // If no stealth meta-address in ENS text records, check ERC-6538 registry
@@ -71,14 +75,14 @@ export async function getStealthMetaAddress(name: string): Promise<string | null
   const normalizedName = normalize(name);
 
   // 1. Check ENS text record
-  const fromEns = await ensClient.getEnsText({
+  const fromEns = await getEnsClient().getEnsText({
     name: normalizedName,
     key: 'stealth-meta-address',
   });
   if (fromEns) return fromEns;
 
   // 2. Fallback: resolve address and check ERC-6538 registry
-  const address = await ensClient.getEnsAddress({ name: normalizedName });
+  const address = await getEnsClient().getEnsAddress({ name: normalizedName });
   if (!address) return null;
 
   return getStealthMetaAddressFromRegistry(address);
@@ -91,7 +95,7 @@ async function getStealthMetaAddressFromRegistry(
   address: `0x${string}`
 ): Promise<string | null> {
   try {
-    const result = await ensClient.readContract({
+    const result = await getEnsClient().readContract({
       address: ERC6538_REGISTRY,
       abi: ERC6538_REGISTRY_ABI,
       functionName: 'stealthMetaAddressOf',

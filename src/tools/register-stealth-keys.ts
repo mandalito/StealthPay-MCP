@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { registerStealthKeys } from '../lib/ens-register.js';
-import { ENS_CONTRACTS } from '../config.js';
+import { ENS_CONTRACTS, explorerTxUrl } from '../config.js';
 
 export function registerRegisterStealthKeys(server: McpServer) {
   server.registerTool(
@@ -75,7 +75,7 @@ export function registerRegisterStealthKeys(server: McpServer) {
             text: [
               `Stealth keys registered for **${result.name}**`,
               '',
-              `Tx: \`${result.txHash}\``,
+              `Tx: ${explorerTxUrl(chain, result.txHash)}`,
               `Stealth meta-address: \`${result.stealthMetaAddress}\``,
               '',
               `✅ Keys saved to \`${envPath}\` automatically.`,

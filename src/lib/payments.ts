@@ -1,4 +1,4 @@
-import { createPublicClient, createWalletClient, http, parseUnits } from 'viem';
+import { createPublicClient, createWalletClient, http, parseUnits, parseEther, formatEther, formatUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
   SUPPORTED_CHAINS,
@@ -10,10 +10,40 @@ import {
   SCHEME_ID,
 } from '../config.js';
 
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000' as `0x${string}`;
+
 /**
- * Send an ERC-20 stablecoin to a stealth address and announce via ERC-5564.
+ * Resolve a token identifier to a contract address.
+ * Accepts: "ETH", a symbol like "USDC", or a 0x contract address.
  */
-export async function sendStablecoin(params: {
+function resolveToken(token: string, chainName: string): { address: `0x${string}` | 'ETH'; isNative: boolean } {
+  if (token.toUpperCase() === 'ETH') {
+    return { address: 'ETH', isNative: true };
+  }
+
+  // If it looks like a contract address, use it directly
+  if (token.startsWith('0x') && token.length === 42) {
+    return { address: token as `0x${string}`, isNative: false };
+  }
+
+  // Look up by symbol in the stablecoins map
+  const chainStables = STABLECOINS[chainName];
+  if (chainStables) {
+    const addr = chainStables[token.toUpperCase()];
+    if (addr) {
+      return { address: addr, isNative: false };
+    }
+  }
+
+  throw new Error(
+    `Unknown token "${token}" on ${chainName}. Use "ETH", a known symbol (${Object.keys(STABLECOINS[chainName] ?? {}).join(', ') || 'none configured'}), or a 0x contract address.`
+  );
+}
+
+/**
+ * Send ETH or any ERC-20 token to a stealth address and announce via ERC-5564.
+ */
+export async function sendToStealth(params: {
   to: `0x${string}`;
   amount: string;
   token: string;
@@ -21,78 +51,75 @@ export async function sendStablecoin(params: {
   privateKey: `0x${string}`;
   ephemeralPublicKey: `0x${string}`;
   viewTag: `0x${string}`;
-}): Promise<{ transferTxHash: string; announceTxHash: string | null; announceFailed?: boolean }> {
+}): Promise<{ transferTxHash: string; announceTxHash: string | null; announceFailed?: boolean; tokenLabel: string }> {
   const chainName = params.chain ?? DEFAULT_CHAIN;
   const chain = SUPPORTED_CHAINS[chainName];
   if (!chain) {
     throw new Error(`Unsupported chain: ${chainName}. Supported: ${Object.keys(SUPPORTED_CHAINS).join(', ')}`);
   }
 
-  const chainStables = STABLECOINS[chainName];
-  if (!chainStables) {
-    throw new Error(`No stablecoins configured for chain: ${chainName}`);
-  }
-
-  const tokenAddress = chainStables[params.token.toUpperCase()];
-  if (!tokenAddress) {
-    throw new Error(
-      `Token ${params.token} not available on ${chainName}. Available: ${Object.keys(chainStables).join(', ')}`
-    );
-  }
-
-  // Validate private key format
   if (!/^0x[0-9a-fA-F]{64}$/.test(params.privateKey)) {
     throw new Error('Invalid private key format. Expected 0x-prefixed 32-byte hex string.');
   }
 
+  const { address: tokenAddress, isNative } = resolveToken(params.token, chainName);
   const account = privateKeyToAccount(params.privateKey);
 
   const rpcUrl = process.env.RPC_URL;
-  const publicClient = createPublicClient({
-    chain,
-    transport: http(rpcUrl),
-  });
+  const publicClient = createPublicClient({ chain, transport: http(rpcUrl) });
+  const walletClient = createWalletClient({ account, chain, transport: http(rpcUrl) });
 
-  const walletClient = createWalletClient({
-    account,
-    chain,
-    transport: http(rpcUrl),
-  });
+  let transferTxHash: string;
+  let metadataTokenAddress: `0x${string}`;
+  let metadataAmount: bigint;
+  let tokenLabel: string;
 
-  // Get token decimals
-  const decimals = await publicClient.readContract({
-    address: tokenAddress,
-    abi: ERC20_ABI,
-    functionName: 'decimals',
-  });
+  if (isNative) {
+    // Native ETH
+    const value = parseEther(params.amount);
+    const balance = await publicClient.getBalance({ address: account.address });
+    if (balance < value) {
+      throw new Error(`Insufficient ETH. Have: ${formatEther(balance)}, need: ${params.amount}`);
+    }
 
-  const amountInUnits = parseUnits(params.amount, decimals);
+    transferTxHash = await walletClient.sendTransaction({
+      to: params.to,
+      value,
+    });
 
-  // Pre-flight: check sender balance
-  const balance = await publicClient.readContract({
-    address: tokenAddress,
-    abi: ERC20_ABI,
-    functionName: 'balanceOf',
-    args: [account.address],
-  });
+    metadataTokenAddress = ADDRESS_ZERO;
+    metadataAmount = value;
+    tokenLabel = 'ETH';
+  } else {
+    // ERC-20 token
+    const addr = tokenAddress as `0x${string}`;
 
-  if ((balance as bigint) < amountInUnits) {
-    throw new Error(
-      `Insufficient ${params.token.toUpperCase()} balance. Have: ${balance}, need: ${amountInUnits}`
-    );
+    const [decimals, balance] = await Promise.all([
+      publicClient.readContract({ address: addr, abi: ERC20_ABI, functionName: 'decimals' }),
+      publicClient.readContract({ address: addr, abi: ERC20_ABI, functionName: 'balanceOf', args: [account.address] }),
+    ]);
+
+    const amountInUnits = parseUnits(params.amount, decimals as number);
+    if ((balance as bigint) < amountInUnits) {
+      throw new Error(
+        `Insufficient token balance. Have: ${formatUnits(balance as bigint, decimals as number)}, need: ${params.amount}`
+      );
+    }
+
+    transferTxHash = await walletClient.writeContract({
+      address: addr,
+      abi: ERC20_ABI,
+      functionName: 'transfer',
+      args: [params.to, amountInUnits],
+    });
+
+    metadataTokenAddress = addr;
+    metadataAmount = amountInUnits;
+    tokenLabel = params.token.toUpperCase();
   }
 
-  // 1. Send the ERC-20 transfer to the stealth address
-  const transferTxHash = await walletClient.writeContract({
-    address: tokenAddress,
-    abi: ERC20_ABI,
-    functionName: 'transfer',
-    args: [params.to, amountInUnits],
-  });
-
-  // 2. Announce the payment via ERC-5564 so the recipient can discover it
-  // Metadata format: view tag (1 byte) + token address + amount
-  const metadata = encodeAnnouncementMetadata(params.viewTag, tokenAddress, amountInUnits);
+  // Announce via ERC-5564
+  const metadata = encodeAnnouncementMetadata(params.viewTag, metadataTokenAddress, metadataAmount);
 
   let announceTxHash: string | null = null;
   let announceFailed = false;
@@ -103,15 +130,15 @@ export async function sendStablecoin(params: {
       functionName: 'announce',
       args: [SCHEME_ID, params.to, params.ephemeralPublicKey, metadata],
     });
-  } catch (announceError) {
-    // Transfer succeeded but announcement failed — funds are sent but recipient
-    // can't discover them without the ephemeral public key. Flag this so the
-    // caller can surface recovery info.
+  } catch {
     announceFailed = true;
   }
 
-  return { transferTxHash, announceTxHash, announceFailed };
+  return { transferTxHash, announceTxHash, announceFailed, tokenLabel };
 }
+
+// Keep backward compat alias
+export const sendStablecoin = sendToStealth;
 
 /**
  * Encode metadata for the ERC-5564 announcement.
@@ -122,13 +149,9 @@ function encodeAnnouncementMetadata(
   tokenAddress: `0x${string}`,
   amount: bigint
 ): `0x${string}` {
-  // View tag is the first byte
   const vt = viewTag.slice(2).padStart(2, '0');
-  // Token address without 0x prefix
   const token = tokenAddress.slice(2).toLowerCase();
-  // Amount as 32-byte hex
   const amt = amount.toString(16).padStart(64, '0');
-
   return `0x${vt}${token}${amt}` as `0x${string}`;
 }
 

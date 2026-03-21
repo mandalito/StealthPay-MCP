@@ -24,6 +24,23 @@ export const SUPPORTED_CHAINS: Record<string, Chain> = {
 // Default chain for operations
 export const DEFAULT_CHAIN = 'sepolia';
 
+/**
+ * Get block explorer URL for a transaction or address.
+ */
+export function explorerTxUrl(chainName: string, txHash: string): string {
+  const chain = SUPPORTED_CHAINS[chainName];
+  const baseUrl = chain?.blockExplorers?.default?.url;
+  if (!baseUrl) return txHash;
+  return `${baseUrl}/tx/${txHash}`;
+}
+
+export function explorerAddressUrl(chainName: string, address: string): string {
+  const chain = SUPPORTED_CHAINS[chainName];
+  const baseUrl = chain?.blockExplorers?.default?.url;
+  if (!baseUrl) return address;
+  return `${baseUrl}/address/${address}`;
+}
+
 // Common stablecoin addresses per chain
 export const STABLECOINS: Record<string, Record<string, `0x${string}`>> = {
   ethereum: {

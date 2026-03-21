@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { formatUnits } from 'viem';
 import { scanAnnouncements } from '../lib/scanner.js';
-import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from '../config.js';
+import { DEFAULT_CHAIN, SUPPORTED_CHAINS, explorerTxUrl } from '../config.js';
 
 export function registerScanAnnouncements(server: McpServer) {
   server.registerTool(
@@ -88,7 +88,7 @@ export function registerScanAnnouncements(server: McpServer) {
             }
           }
           lines.push(`Block: ${p.blockNumber}`);
-          lines.push(`Tx: \`${p.txHash}\``);
+          lines.push(`Tx: ${explorerTxUrl(chain, p.txHash)}`);
           lines.push(`Ephemeral key: \`${p.ephemeralPublicKey}\``);
         }
 

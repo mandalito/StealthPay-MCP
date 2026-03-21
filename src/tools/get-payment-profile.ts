@@ -17,7 +17,8 @@ export function registerGetPaymentProfile(server: McpServer) {
       try {
         const profile = await getPaymentProfile(name);
 
-        if (!profile.address) {
+        // A name can exist without an addr record (e.g., only text records set)
+        if (!profile.address && !profile.stealthMetaAddress) {
           return {
             content: [
               {
@@ -31,8 +32,13 @@ export function registerGetPaymentProfile(server: McpServer) {
 
         const lines = [
           `**${profile.ensName}**`,
-          `Address: ${profile.address}`,
         ];
+
+        if (profile.address) {
+          lines.push(`Address: ${profile.address}`);
+        } else {
+          lines.push(`Address: not set (name exists but no ETH address record configured)`);
+        }
 
         if (profile.avatar) lines.push(`Avatar: ${profile.avatar}`);
         if (profile.preferredChain) lines.push(`Preferred chain: ${profile.preferredChain}`);
