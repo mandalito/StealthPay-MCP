@@ -8,14 +8,16 @@ export function registerDeriveStealthKey(server: McpServer) {
     {
       title: 'Derive Stealth Private Key',
       description:
-        'Derive the private key that controls a stealth address. Requires the recipient\'s spending and viewing private keys, plus the ephemeral public key from the announcement. WARNING: the output contains a private key — handle with care.',
+        'Derive the private key that controls a stealth address. Uses RECIPIENT_SPENDING_PRIVATE_KEY and RECIPIENT_VIEWING_PRIVATE_KEY from environment by default (keys never exposed to AI). WARNING: the output contains a private key — handle with care.',
       inputSchema: z.object({
         spendingPrivateKey: z
           .string()
-          .describe('Recipient spending private key (0x-prefixed hex)'),
+          .optional()
+          .describe('Spending private key (0x-prefixed hex). Defaults to RECIPIENT_SPENDING_PRIVATE_KEY env var.'),
         viewingPrivateKey: z
           .string()
-          .describe('Recipient viewing private key (0x-prefixed hex)'),
+          .optional()
+          .describe('Viewing private key (0x-prefixed hex). Defaults to RECIPIENT_VIEWING_PRIVATE_KEY env var.'),
         ephemeralPublicKey: z
           .string()
           .describe('Ephemeral public key from the ERC-5564 announcement'),
@@ -27,9 +29,24 @@ export function registerDeriveStealthKey(server: McpServer) {
     },
     async ({ spendingPrivateKey, viewingPrivateKey, ephemeralPublicKey, expectedAddress }) => {
       try {
+        const resolvedSpendingKey = spendingPrivateKey || process.env.RECIPIENT_SPENDING_PRIVATE_KEY;
+        const resolvedViewingKey = viewingPrivateKey || process.env.RECIPIENT_VIEWING_PRIVATE_KEY;
+
+        if (!resolvedSpendingKey || !resolvedViewingKey) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: 'Missing keys. Either set RECIPIENT_SPENDING_PRIVATE_KEY and RECIPIENT_VIEWING_PRIVATE_KEY in your .env file, or provide them as parameters.',
+              },
+            ],
+            isError: true,
+          };
+        }
+
         const result = deriveStealthPrivateKey({
-          spendingPrivateKey: spendingPrivateKey as `0x${string}`,
-          viewingPrivateKey: viewingPrivateKey as `0x${string}`,
+          spendingPrivateKey: (resolvedSpendingKey.startsWith('0x') ? resolvedSpendingKey : `0x${resolvedSpendingKey}`) as `0x${string}`,
+          viewingPrivateKey: (resolvedViewingKey.startsWith('0x') ? resolvedViewingKey : `0x${resolvedViewingKey}`) as `0x${string}`,
           ephemeralPublicKey: ephemeralPublicKey as `0x${string}`,
           expectedAddress: expectedAddress as `0x${string}` | undefined,
         });

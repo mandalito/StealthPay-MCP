@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { registerStealthKeys } from '../lib/ens-register.js';
 import { ENS_CONTRACTS } from '../config.js';
 
@@ -9,7 +10,7 @@ export function registerRegisterStealthKeys(server: McpServer) {
     {
       title: 'Register Stealth Keys',
       description:
-        'Generate spending and viewing keypairs, then set the stealth-meta-address text record on an ENS name. The caller must own/manage the ENS name. WARNING: The output contains private keys — save them securely.',
+        'Generate spending and viewing keypairs, then set the stealth-meta-address text record on an ENS name. The caller must own/manage the ENS name. Private keys are saved directly to the .env file — they are never returned to the AI.',
       inputSchema: z.object({
         name: z
           .string()
@@ -39,6 +40,35 @@ export function registerRegisterStealthKeys(server: McpServer) {
           chain,
         });
 
+        // Save keys directly to .env — never return private keys to AI
+        const envPath = process.env.DOTENV_PATH || '.env';
+        let envContent = '';
+        if (existsSync(envPath)) {
+          envContent = readFileSync(envPath, 'utf-8');
+        }
+
+        // Helper to set or update an env var in the file
+        const setEnvVar = (content: string, key: string, value: string): string => {
+          const regex = new RegExp(`^${key}=.*$`, 'm');
+          if (regex.test(content)) {
+            return content.replace(regex, `${key}=${value}`);
+          }
+          return content.trimEnd() + `\n${key}=${value}\n`;
+        };
+
+        envContent = setEnvVar(envContent, 'RECIPIENT_SPENDING_PRIVATE_KEY', result.spendingPrivateKey);
+        envContent = setEnvVar(envContent, 'RECIPIENT_SPENDING_PUBLIC_KEY', result.spendingPublicKey);
+        envContent = setEnvVar(envContent, 'RECIPIENT_VIEWING_PRIVATE_KEY', result.viewingPrivateKey);
+        envContent = setEnvVar(envContent, 'RECIPIENT_VIEWING_PUBLIC_KEY', result.viewingPublicKey);
+
+        writeFileSync(envPath, envContent);
+
+        // Also set in current process so tools work without restart
+        process.env.RECIPIENT_SPENDING_PRIVATE_KEY = result.spendingPrivateKey;
+        process.env.RECIPIENT_SPENDING_PUBLIC_KEY = result.spendingPublicKey;
+        process.env.RECIPIENT_VIEWING_PRIVATE_KEY = result.viewingPrivateKey;
+        process.env.RECIPIENT_VIEWING_PUBLIC_KEY = result.viewingPublicKey;
+
         return {
           content: [{
             type: 'text' as const,
@@ -48,14 +78,10 @@ export function registerRegisterStealthKeys(server: McpServer) {
               `Tx: \`${result.txHash}\``,
               `Stealth meta-address: \`${result.stealthMetaAddress}\``,
               '',
-              `**SAVE THESE KEYS SECURELY:**`,
-              `Spending private key: \`${result.spendingPrivateKey}\``,
-              `Spending public key:  \`${result.spendingPublicKey}\``,
-              `Viewing private key:  \`${result.viewingPrivateKey}\``,
-              `Viewing public key:   \`${result.viewingPublicKey}\``,
+              `✅ Keys saved to \`${envPath}\` automatically.`,
+              `✅ /stealthpay-scan and /stealthpay-withdraw are ready to use (no restart needed).`,
               '',
               `Anyone can now send stealth payments to ${result.name}.`,
-              `You need the spending + viewing private keys to discover and claim payments.`,
             ].join('\n'),
           }],
         };

@@ -10,14 +10,16 @@ export function registerScanAnnouncements(server: McpServer) {
     {
       title: 'Scan Stealth Announcements',
       description:
-        'Scan ERC-5564 announcements to discover stealth payments for a recipient. Requires the recipient\'s viewing private key (cannot spend funds) and spending public key.',
+        'Scan ERC-5564 announcements to discover stealth payments for a recipient. Uses RECIPIENT_VIEWING_PRIVATE_KEY and RECIPIENT_SPENDING_PUBLIC_KEY from environment by default (keys never exposed to AI). Override with explicit parameters if scanning for someone else.',
       inputSchema: z.object({
         viewingPrivateKey: z
           .string()
-          .describe('Recipient viewing private key (0x-prefixed hex). Used for scanning only — cannot spend funds.'),
+          .optional()
+          .describe('Viewing private key (0x-prefixed hex). Defaults to RECIPIENT_VIEWING_PRIVATE_KEY env var.'),
         spendingPublicKey: z
           .string()
-          .describe('Recipient spending public key (0x-prefixed compressed hex)'),
+          .optional()
+          .describe('Spending public key (0x-prefixed compressed hex). Defaults to RECIPIENT_SPENDING_PUBLIC_KEY env var.'),
         chain: z
           .string()
           .default(DEFAULT_CHAIN)
@@ -34,9 +36,24 @@ export function registerScanAnnouncements(server: McpServer) {
     },
     async ({ viewingPrivateKey, spendingPublicKey, chain, fromBlock, toBlock }) => {
       try {
+        const resolvedViewingKey = viewingPrivateKey || process.env.RECIPIENT_VIEWING_PRIVATE_KEY;
+        const resolvedSpendingPub = spendingPublicKey || process.env.RECIPIENT_SPENDING_PUBLIC_KEY;
+
+        if (!resolvedViewingKey || !resolvedSpendingPub) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: 'Missing keys. Either set RECIPIENT_VIEWING_PRIVATE_KEY and RECIPIENT_SPENDING_PUBLIC_KEY in your .env file, or provide them as parameters.',
+              },
+            ],
+            isError: true,
+          };
+        }
+
         const payments = await scanAnnouncements({
-          viewingPrivateKey: viewingPrivateKey as `0x${string}`,
-          spendingPublicKey: spendingPublicKey as `0x${string}`,
+          viewingPrivateKey: (resolvedViewingKey.startsWith('0x') ? resolvedViewingKey : `0x${resolvedViewingKey}`) as `0x${string}`,
+          spendingPublicKey: (resolvedSpendingPub.startsWith('0x') ? resolvedSpendingPub : `0x${resolvedSpendingPub}`) as `0x${string}`,
           chain,
           fromBlock: fromBlock ? BigInt(fromBlock) : undefined,
           toBlock: toBlock ? BigInt(toBlock) : undefined,

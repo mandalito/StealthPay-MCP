@@ -1,9 +1,3 @@
 {
-  "mcpServers": {
-    "stealthpay": {
-      "command": "node",
-      "args": ["dist/index.js"],
-      "cwd": "/Users/mandalito/Documents/StealthPay-MCP"
-    }
-  }
+  "mcpServers": {}
 }

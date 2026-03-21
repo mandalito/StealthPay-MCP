@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerGetPaymentProfile } from './tools/get-payment-profile.js';
@@ -10,11 +10,19 @@ import { registerDeriveStealthKey } from './tools/derive-stealth-key.js';
 import { registerWithdrawFromStealth } from './tools/withdraw-from-stealth.js';
 import { registerRegisterEnsName } from './tools/register-ens-name.js';
 import { registerRegisterStealthKeys } from './tools/register-stealth-keys.js';
+import { registerGetMyProfile } from './tools/get-my-profile.js';
+import { registerClaimStealthPayment } from './tools/claim-stealth-payment.js';
+
+// Load .env from DOTENV_PATH if set, otherwise default location
+config({ path: process.env.DOTENV_PATH });
 
 const server = new McpServer({
   name: 'stealthpay-mcp',
   version: '0.1.0',
 });
+
+// Register all tools — identity
+registerGetMyProfile(server);
 
 // Register all tools — onboarding
 registerRegisterEnsName(server);
@@ -30,6 +38,7 @@ registerCreatePaymentLink(server);
 registerScanAnnouncements(server);
 registerDeriveStealthKey(server);
 registerWithdrawFromStealth(server);
+registerClaimStealthPayment(server);
 
 // Start the server
 async function main() {
