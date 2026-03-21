@@ -13,7 +13,11 @@ This repository follows these working rules:
    - pull/rebase and reconcile if remote changed
 6. Keep local-only artifacts under `.local/` (SDK clones, probes, scratch files); never commit `.local/` content.
 7. After pulling teammate changes, run a quick docs/code reconciliation pass and update docs when behavior diverges.
-8. Private key safety policy (strict):
+8. Maintain `docs/TODO.md` as the consolidated backlog:
+   - add new gaps/tasks when discovered
+   - mark completed items when shipped
+   - keep it in sync in the same commit as related changes
+9. Private key safety policy (strict):
    - the agent must never request users to paste private keys in chat
    - the agent must never display, log, or echo private keys in tool outputs
    - private keys must be read from local environment/runtime only

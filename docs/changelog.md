@@ -1,5 +1,14 @@
 # Documentation Changelog
 
+## v0.12.0 - 2026-03-21T17:32:46+01:00
+
+- Reviewed colleague security-fix commit (`91659d6`) and updated security assessment with verification status, timestamp, and residual-risk notes.
+- Added consolidated backlog file `docs/TODO.md` and linked it from docs index.
+- Updated README with explicit chain/contract requirements and live deployment check results (announcer/registry by chain).
+- Clarified README tool surface to match current registered MCP endpoints and legacy helper status.
+- Updated `docs/specifications/network-support.md` with requirements-by-feature and live deployment matrix.
+- Updated `AGENT.md` policy to require maintaining `docs/TODO.md` in sync with code/docs changes.
+
 ## v0.11.0 - 2026-03-21T17:15:11+01:00
 
 - Strengthened `AGENT.md` collaboration policy with explicit run-test/commit/push/pull-reconcile workflow and local-only `.local/` handling.

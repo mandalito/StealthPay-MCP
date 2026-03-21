@@ -83,7 +83,7 @@ Recipient key handling:
 
 **Project-only** — add a `.mcp.json` in your project root with the same content.
 
-Then restart Claude Code. The 13 tools will be available immediately.
+Then restart Claude Code. The 11 registered tools will be available immediately.
 
 ## Tools
 
@@ -116,13 +116,59 @@ Then restart Claude Code. The 13 tools will be available immediately.
 | Tool | Description |
 |------|-------------|
 | `scan-announcements` | Scan ERC-5564 events to discover payments addressed to you |
-| `derive-stealth-key` | Compute the private key that controls a stealth address |
-| `withdraw-from-stealth` | Transfer funds from a stealth address to your wallet |
-| `claim-stealth-payment` | Derive + withdraw in one step using locally stored recipient keys |
+| `claim-stealth-payment` | Derive + withdraw in one step using locally stored recipient keys (keys never pass through AI) |
 
-## Supported chains
+## Chain support and requirements
 
-Ethereum, Base, Optimism, Arbitrum, Polygon, Gnosis, Sepolia, Hoodi
+StealthPay flows depend on different on-chain requirements depending on the feature:
+
+- ENS onboarding/resolution (`register-ens-name`, `register-stealth-keys`, `get-payment-profile`, `generate-stealth-address`) requires ENS contracts and an ENS-capable RPC on the selected `ENS_CHAIN`.
+- Stealth payment flows (`send-stealth-payment`, `scan-announcements`, `claim-stealth-payment`) require:
+  - ERC-5564 announcer deployment
+  - ERC-6538 registry deployment
+  - reachable RPC on the payment chain
+
+Live deployment check (via `eth_getCode`) on **2026-03-21** for configured singleton addresses:
+
+| Chain | ERC-5564 announcer (`0x5564...5564`) | ERC-6538 registry (`0x6538...6538`) |
+|------|---------------------------------------|--------------------------------------|
+| ethereum | deployed | deployed |
+| base | deployed | deployed |
+| optimism | deployed | deployed |
+| arbitrum | deployed | deployed |
+| polygon | deployed | deployed |
+| gnosis | deployed | deployed |
+| sepolia | deployed | deployed |
+| hoodi | not deployed | not deployed |
+
+### ENS requirements
+
+- ENS registration and resolver write operations are currently implemented for `sepolia` and `ethereum` only (see `ENS_CONTRACTS`).
+- ENS resolution defaults to `ethereum` unless `ENS_CHAIN=sepolia` is set.
+- Hackathon baseline uses Sepolia for both ENS and payment execution.
+
+### Practical support summary
+
+- **Operational now**: `ethereum`, `base`, `optimism`, `arbitrum`, `polygon`, `gnosis`, `sepolia` (for stealth announcement/scan primitives).
+- **Not operational yet**: `hoodi` (contracts missing at configured singleton addresses).
+
+## Programmable payment profile (implementation status)
+
+The proposed `stealthpay.v1.*` key namespace is not yet active in code.
+
+Current implementation reads legacy ENS text records:
+
+- `avatar`
+- `chain`
+- `token`
+- `stealth-meta-address`
+- `description`
+
+Stealth transfer announcement metadata (ERC-5564 event payload) is encoded as:
+
+- `viewTag` (1 byte)
+- `tokenAddress` (20 bytes, `0x00...00` for native ETH)
+- `amount` (32 bytes, uint256)
 
 ## Testing
 
@@ -181,13 +227,13 @@ src/
     ├── generate-stealth-address.ts
     ├── send-stealth-payment.ts
     ├── create-payment-link.ts
-    ├── claim-stealth-payment.ts
     ├── get-my-profile.ts
     ├── generate-wallet.ts
     ├── get-balances.ts
     ├── scan-announcements.ts
-    ├── derive-stealth-key.ts
-    └── withdraw-from-stealth.ts
+    ├── claim-stealth-payment.ts
+    ├── derive-stealth-key.ts      # legacy helper, not registered as MCP endpoint
+    └── withdraw-from-stealth.ts   # legacy helper, not registered as MCP endpoint
 ```
 
 ## Local Helpers (`.local/`)
@@ -219,7 +265,7 @@ These scripts are not part of the production server and are not committed.
 ## Known limitations
 
 - **Token-only stealth account cannot withdraw without native gas**: If a stealth account receives non-native tokens but has `0` native ETH, withdrawal fails until gas is funded. Gasless/paymaster is not in hackathon MVP scope.
-- **Key exposure risk in legacy recipient tools**: `derive-stealth-key` and `withdraw-from-stealth` can expose sensitive key material to the MCP client flow. For safer operations, prefer `claim-stealth-payment`, which keeps recipient keys in local `.env`.
+- **Legacy key-handling files still exist in source**: `derive-stealth-key.ts` and `withdraw-from-stealth.ts` remain in the repository for internal/library compatibility, but are not registered MCP endpoints.
 - **Sepolia stablecoin send path**: `send-stealth-payment` uses the `STABLECOINS` config map; unsupported token addresses require config updates before use.
 - **Hoodi testnet status**: Chain config exists, but production-grade ERC-5564/6538 readiness remains unvalidated for this repo.
 - **Metadata format compatibility**: Scanner parsing assumes this project's metadata conventions; other ERC-5564 senders may encode differently.

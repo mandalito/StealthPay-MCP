@@ -1,8 +1,9 @@
 # Private Key Leakage Risk Assessment
 
 Generated: 2026-03-21T17:31:00+01:00
-Updated: 2026-03-21
+Updated: 2026-03-21T17:33:20+01:00
 Branch: `main`
+Reference fix commit: `91659d6`
 
 ## Scope
 
@@ -16,9 +17,9 @@ Agent and MCP flows should never expose private keys (sender keys, recipient spe
 
 ## Compliance Status
 
-**Compliant.**
+**Compliant for currently registered MCP endpoints.**
 
-## Original Findings & Remediation
+## Findings Verification
 
 | # | Finding | Severity | Remediation | Status |
 |---|---------|----------|-------------|--------|
@@ -26,6 +27,10 @@ Agent and MCP flows should never expose private keys (sender keys, recipient spe
 | 2 | `withdraw-from-stealth` requires `stealthPrivateKey` as tool input | High | Tool removed from registered MCP tools. `claim-stealth-payment` handles derive+withdraw internally. | ✅ Fixed |
 | 3 | `scan-announcements` allows optional explicit `viewingPrivateKey` input | Medium | Removed key params from input schema. Keys read from env vars only. | ✅ Fixed |
 | 4 | `test/register-e2e.ts` prints private keys to stdout | Low | Gated behind `DEBUG=true` flag. | ✅ Fixed |
+
+Validation run:
+
+- `npm run test:tools` passed on 2026-03-21T17:30:59+01:00.
 
 ## Current Controls
 
@@ -49,3 +54,8 @@ Agent and MCP flows should never expose private keys (sender keys, recipient spe
 | `claim-stealth-payment` | `RECIPIENT_SPENDING/VIEWING_PRIVATE_KEY` | Read from env, derives + withdraws internally |
 
 All secrets stay within the Node.js process boundary.
+
+## Residual Risks / Follow-up
+
+1. `src/tools/derive-stealth-key.ts` and `src/tools/withdraw-from-stealth.ts` still exist in the repository and could reintroduce leakage risk if re-registered later.
+2. Debug mode (`DEBUG=true`) intentionally prints keys in `test/register-e2e.ts`; this is acceptable for local troubleshooting only and must never be used with real funds.

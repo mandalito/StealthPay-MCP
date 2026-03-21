@@ -7,6 +7,7 @@ This folder tracks the current implementation baseline for the hackathon.
 ```text
 docs/
   README.md
+  TODO.md
   changelog.md
   implementation-gap-report.md
   specifications/
@@ -38,8 +39,8 @@ docs/
 ## Current Baseline
 
 - Hackathon testnet decision: Sepolia
-- Implementation-first docs: tool names and payloads match current code in `src/tools/*`
-- Recipient flow is included (scan -> derive key -> withdraw)
+- Registered MCP endpoint surface is currently 11 tools (`src/index.ts`).
+- Recipient flow baseline is `scan-announcements` -> `claim-stealth-payment` (keys remain server-side).
 - Local helper scripts and external SDK clones are kept under gitignored `.local/`
 
 ## Historical Note
@@ -55,3 +56,4 @@ docs/
 - Document current behavior first.
 - Mark future features explicitly as non-MVP.
 - Keep API examples synchronized with actual tool names and input fields.
+- Keep `TODO.md` updated as the single consolidated backlog.
