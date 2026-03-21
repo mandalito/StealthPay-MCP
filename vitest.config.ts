@@ -5,6 +5,11 @@ export default defineConfig({
     globals: true,
     testTimeout: 30_000,
     include: ['test/**/*.test.ts'],
-    exclude: ['**/.local/**', '**/node_modules/**', '**/dist/**'],
+    exclude: [
+      '**/.local/**',
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/*.integration.test.ts',
+    ],
   },
 });

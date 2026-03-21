@@ -27,6 +27,8 @@ docs/
     mcp-tool-usage.md
   collaboration/
     git-sync-workflow.md
+  testing/
+    mcp-endpoint-coverage-report.md
 ```
 
 ## Current Baseline

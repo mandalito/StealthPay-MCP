@@ -83,9 +83,17 @@ Recipient key handling:
 
 **Project-only** — add a `.mcp.json` in your project root with the same content.
 
-Then restart Claude Code. The 9 tools will be available immediately.
+Then restart Claude Code. The 13 tools will be available immediately.
 
 ## Tools
+
+### Identity
+
+| Tool | Description |
+|------|-------------|
+| `get-my-profile` | Show current wallet, reverse ENS name, payment profile, and recipient-key status |
+| `generate-wallet` | Generate and persist a local sender wallet in `.env` |
+| `get-balances` | Check native/token balances of your sender wallet on a selected chain |
 
 ### Onboarding
 
@@ -110,6 +118,7 @@ Then restart Claude Code. The 9 tools will be available immediately.
 | `scan-announcements` | Scan ERC-5564 events to discover payments addressed to you |
 | `derive-stealth-key` | Compute the private key that controls a stealth address |
 | `withdraw-from-stealth` | Transfer funds from a stealth address to your wallet |
+| `claim-stealth-payment` | Derive + withdraw in one step using locally stored recipient keys |
 
 ## Supported chains
 
@@ -118,8 +127,14 @@ Ethereum, Base, Optimism, Arbitrum, Polygon, Gnosis, Sepolia, Hoodi
 ## Testing
 
 ```bash
+# Endpoint contract tests (all MCP tools, mocked deps)
+npm run test:tools
+
 # Unit tests (stealth math, payment links — no network)
 npm run test:unit
+
+# Default deterministic suite (unit + tool tests)
+npm test
 
 # ENS integration test (reads mainnet ENS)
 npm run test:ens
@@ -144,15 +159,6 @@ npx tsx test/register-e2e.ts <label>
 ## Architecture
 
 ```
-
-## Local Helpers (`.local/`)
-
-`.local/` is a gitignored workspace for local-only artifacts:
-
-- cloned external repos used for reference (for example Umbra SDK source)
-- temporary MCP probe scripts (`.mjs`) used to exercise tools over stdio during debugging
-
-These scripts are not part of the production server and are not committed.
 src/
 ├── index.ts                 # MCP server entry point
 ├── config.ts                # Chain configs, contract addresses, ABIs
@@ -170,10 +176,23 @@ src/
     ├── generate-stealth-address.ts
     ├── send-stealth-payment.ts
     ├── create-payment-link.ts
+    ├── claim-stealth-payment.ts
+    ├── get-my-profile.ts
+    ├── generate-wallet.ts
+    ├── get-balances.ts
     ├── scan-announcements.ts
     ├── derive-stealth-key.ts
     └── withdraw-from-stealth.ts
 ```
+
+## Local Helpers (`.local/`)
+
+`.local/` is a gitignored workspace for local-only artifacts:
+
+- cloned external repos used for reference (for example Umbra SDK source)
+- temporary MCP probe scripts (`.mjs`) used to exercise tools over stdio during debugging
+
+These scripts are not part of the production server and are not committed.
 
 ## Standards
 

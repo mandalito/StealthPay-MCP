@@ -10,6 +10,7 @@
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:tools": "vitest run test/tools",
     "test:unit": "vitest run test/stealth.test.ts test/payments.test.ts",
     "test:ens": "vitest run test/ens.integration.test.ts",
     "test:e2e": "tsx test/testnet-e2e.ts"

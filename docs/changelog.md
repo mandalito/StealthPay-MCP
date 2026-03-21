@@ -1,5 +1,11 @@
 # Documentation Changelog
 
+## v0.9.0 - 2026-03-21T16:26:50+01:00
+
+- Added MCP endpoint testing coverage report with a full tool-to-test mapping.
+- Documented deterministic test command strategy (`npm test`, `npm run test:tools`, `npm run test:ens`).
+- Added Sepolia fork testing recommendation for transaction-heavy paths.
+
 ## v0.8.0 - 2026-03-21T16:07:40+01:00
 
 - Documented `.local/` usage for local MCP probe scripts (`mcp-*.mjs`) and SDK clones.
