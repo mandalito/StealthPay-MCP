@@ -8,6 +8,7 @@ This folder contains the documentation baseline for the hackathon.
 docs/
   README.md
   changelog.md
+  implementation-gap-report.md
   specifications/
     product-spec.md
     mcp-server-spec.md

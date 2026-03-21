@@ -1,5 +1,10 @@
 # Documentation Changelog
 
+## v0.6.0 - 2026-03-21T13:11:58+01:00
+
+- Added `docs/implementation-gap-report.md` to compare implementation against current documentation.
+- Added report links in README and docs index.
+
 ## v0.5.0 - 2026-03-21T12:23:17+01:00
 
 - Marked gasless transactions as future development (not hackathon MVP scope).

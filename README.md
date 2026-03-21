@@ -48,6 +48,7 @@ Underlying onchain pieces in scope:
 ## Documentation
 
 - [Documentation Hub](docs/README.md)
+- [Implementation Gap Report](docs/implementation-gap-report.md)
 - [Product Specification](docs/specifications/product-spec.md)
 - [MCP Server Specification](docs/specifications/mcp-server-spec.md)
 - [Payment Profile Schema](docs/specifications/payment-profile-schema.md)
