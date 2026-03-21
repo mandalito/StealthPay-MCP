@@ -22,7 +22,7 @@ export const SUPPORTED_CHAINS: Record<string, Chain> = {
 };
 
 // Default chain for operations
-export const DEFAULT_CHAIN = 'base';
+export const DEFAULT_CHAIN = 'sepolia';
 
 // Common stablecoin addresses per chain
 export const STABLECOINS: Record<string, Record<string, `0x${string}`>> = {
