@@ -40,7 +40,8 @@ Validation run:
 - `register-stealth-keys` persists keys locally in `.env` — never returns them in tool output.
 - `scan-announcements` reads keys from env only — no key params in input schema.
 - `generate-wallet` saves key to `.env` — returns only the address.
-- `derive-stealth-key` and `withdraw-from-stealth` are no longer registered as MCP tools.
+- `derive-stealth-key` and `withdraw-from-stealth` tool wrapper files deleted from repository.
+- Regression test (`test/tools/registered-tools.test.ts`) asserts forbidden tools are never registered.
 - E2E test key output gated behind `DEBUG=true`.
 
 ## Remaining Tools That Handle Secrets (Server-Side Only)
@@ -57,5 +58,4 @@ All secrets stay within the Node.js process boundary.
 
 ## Residual Risks / Follow-up
 
-1. `src/tools/derive-stealth-key.ts` and `src/tools/withdraw-from-stealth.ts` still exist in the repository and could reintroduce leakage risk if re-registered later.
-2. Debug mode (`DEBUG=true`) intentionally prints keys in `test/register-e2e.ts`; this is acceptable for local troubleshooting only and must never be used with real funds.
+1. Debug mode (`DEBUG=true`) intentionally prints keys in `test/register-e2e.ts`; this is acceptable for local troubleshooting only and must never be used with real funds.
