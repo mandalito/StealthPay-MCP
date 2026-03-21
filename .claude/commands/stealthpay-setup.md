@@ -1,4 +1,4 @@
-Set up StealthPay: register an ENS name with stealth keys.
+Set up StealthPay: register an ENS name with stealth keys and payment preferences.
 
 Walk the user through onboarding:
 
@@ -7,13 +7,7 @@ Walk the user through onboarding:
    - If new: use `register-ens-name` (warn about the ~65s commitment wait).
    - If existing: skip to step 3.
 3. Use `register-stealth-keys` to generate and register stealth keys on their ENS name.
-4. **Important**: Tell the user to save the stealth keys output to their .env file:
-   ```
-   RECIPIENT_SPENDING_PRIVATE_KEY=0x...
-   RECIPIENT_SPENDING_PUBLIC_KEY=0x...
-   RECIPIENT_VIEWING_PRIVATE_KEY=0x...
-   ```
-   This allows /scan and /withdraw to work without exposing keys to AI.
-5. Show a final summary of their setup.
+4. **Set payment preferences**: Ask the user for their preferred chain (e.g., sepolia, base) and token (e.g., ETH, USDC). Use `set-profile` to save these on-chain. These will be used as defaults when others send them payments.
+5. Show a final summary of their setup including preferences.
 
 Arguments: $ARGUMENTS

@@ -1,6 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { getStealthMetaAddress } from '../lib/ens.js';
+import { getPaymentProfile } from '../lib/ens.js';
 import { generateStealthAddress } from '../lib/stealth.js';
 import { sendToStealth } from '../lib/payments.js';
 import { SUPPORTED_CHAINS, DEFAULT_CHAIN, explorerTxUrl } from '../config.js';
@@ -17,12 +17,12 @@ export function registerSendStealthPayment(server: McpServer) {
         amount: z.string().describe('Amount to send (e.g. "0.01" or "100.00")'),
         token: z
           .string()
-          .default('ETH')
-          .describe('Token: "ETH" for native, a symbol like "USDC", or a 0x ERC-20 contract address (default: ETH)'),
+          .optional()
+          .describe('Token: "ETH" for native, a symbol like "USDC", or a 0x ERC-20 contract address. If omitted, uses the recipient\'s preferred token or defaults to ETH.'),
         chain: z
           .string()
-          .default(DEFAULT_CHAIN)
-          .describe(`Chain to send on (default: ${DEFAULT_CHAIN}). Supported: ${Object.keys(SUPPORTED_CHAINS).join(', ')}`),
+          .optional()
+          .describe(`Chain to send on. If omitted, uses the recipient's preferred chain or defaults to ${DEFAULT_CHAIN}. Supported: ${Object.keys(SUPPORTED_CHAINS).join(', ')}`),
       }),
     },
     async ({ to, amount, token, chain }) => {
@@ -41,9 +41,9 @@ export function registerSendStealthPayment(server: McpServer) {
         }
         const privateKey = (rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as `0x${string}`;
 
-        // 1. Look up stealth meta-address
-        const metaAddress = await getStealthMetaAddress(to);
-        if (!metaAddress) {
+        // 1. Look up recipient profile (stealth meta-address + preferences)
+        const profile = await getPaymentProfile(to);
+        if (!profile.stealthMetaAddress) {
           return {
             content: [
               {
@@ -55,15 +55,19 @@ export function registerSendStealthPayment(server: McpServer) {
           };
         }
 
-        // 2. Generate one-time stealth address
-        const stealth = generateStealthAddress(metaAddress);
+        // 2. Apply recipient preferences as defaults
+        const resolvedChain = chain || profile.preferredChain || DEFAULT_CHAIN;
+        const resolvedToken = token || profile.preferredToken || 'ETH';
 
-        // 3. Send funds + announce via ERC-5564
+        // 3. Generate one-time stealth address
+        const stealth = generateStealthAddress(profile.stealthMetaAddress);
+
+        // 4. Send funds + announce via ERC-5564
         const { transferTxHash, announceTxHash, announceFailed, tokenLabel } = await sendToStealth({
           to: stealth.stealthAddress as `0x${string}`,
           amount,
-          token,
-          chain,
+          token: resolvedToken,
+          chain: resolvedChain,
           privateKey,
           ephemeralPublicKey: stealth.ephemeralPublicKey as `0x${string}`,
           viewTag: stealth.viewTag as `0x${string}`,
@@ -73,9 +77,9 @@ export function registerSendStealthPayment(server: McpServer) {
           `Stealth payment sent to **${to}**`,
           ``,
           `Amount: ${amount} ${tokenLabel}`,
-          `Chain: ${chain}`,
+          `Chain: ${resolvedChain}${profile.preferredChain && !chain ? ` (recipient preference)` : ''}`,
           `Stealth address: \`${stealth.stealthAddress}\``,
-          `Transfer tx: ${explorerTxUrl(chain, transferTxHash)}`,
+          `Transfer tx: ${explorerTxUrl(resolvedChain, transferTxHash)}`,
         ];
 
         if (announceFailed) {
@@ -88,7 +92,7 @@ export function registerSendStealthPayment(server: McpServer) {
             `View tag: \`${stealth.viewTag}\``,
           );
         } else {
-          lines.push(`Announcement tx: ${explorerTxUrl(chain, announceTxHash!)}`);
+          lines.push(`Announcement tx: ${explorerTxUrl(resolvedChain, announceTxHash!)}`);
         }
 
         lines.push(

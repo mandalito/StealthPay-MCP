@@ -13,6 +13,7 @@ import { registerGetMyProfile } from '../../src/tools/get-my-profile.js';
 import { registerClaimStealthPayment } from '../../src/tools/claim-stealth-payment.js';
 import { registerGenerateWallet } from '../../src/tools/generate-wallet.js';
 import { registerGetBalances } from '../../src/tools/get-balances.js';
+import { registerSetProfile } from '../../src/tools/set-profile.js';
 
 const ALLOWED_TOOLS = [
   'get-my-profile',
@@ -20,6 +21,7 @@ const ALLOWED_TOOLS = [
   'get-balances',
   'register-ens-name',
   'register-stealth-keys',
+  'set-profile',
   'get-payment-profile',
   'generate-stealth-address',
   'send-stealth-payment',
@@ -49,6 +51,7 @@ describe('Registered tool list', () => {
   registerCreatePaymentLink(server as unknown as any);
   registerScanAnnouncements(server as unknown as any);
   registerClaimStealthPayment(server as unknown as any);
+  registerSetProfile(server as unknown as any);
 
   const registeredNames = Array.from(server.tools.keys());
 

@@ -2,17 +2,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerAndGetTool } from './mcp-tool-test-utils.js';
 
 const {
-  getStealthMetaAddressMock,
+  getPaymentProfileMock,
   generateStealthAddressMock,
   sendToStealthMock,
 } = vi.hoisted(() => ({
-  getStealthMetaAddressMock: vi.fn(),
+  getPaymentProfileMock: vi.fn(),
   generateStealthAddressMock: vi.fn(),
   sendToStealthMock: vi.fn(),
 }));
 
 vi.mock('../../src/lib/ens.js', () => ({
-  getStealthMetaAddress: getStealthMetaAddressMock,
+  getPaymentProfile: getPaymentProfileMock,
 }));
 
 vi.mock('../../src/lib/stealth.js', () => ({
@@ -25,12 +25,22 @@ vi.mock('../../src/lib/payments.js', () => ({
 
 import { registerSendStealthPayment } from '../../src/tools/send-stealth-payment.js';
 
+const EMPTY_PROFILE = {
+  ensName: 'alice.eth',
+  address: null,
+  avatar: null,
+  preferredChain: null,
+  preferredToken: null,
+  stealthMetaAddress: null,
+  description: null,
+};
+
 describe('tool:send-stealth-payment', () => {
   const originalSenderKey = process.env.SENDER_PRIVATE_KEY;
 
   beforeEach(() => {
     process.env.SENDER_PRIVATE_KEY = originalSenderKey;
-    getStealthMetaAddressMock.mockReset();
+    getPaymentProfileMock.mockReset();
     generateStealthAddressMock.mockReset();
     sendToStealthMock.mockReset();
   });
@@ -47,7 +57,7 @@ describe('tool:send-stealth-payment', () => {
 
   it('fails when recipient has no stealth meta-address', async () => {
     process.env.SENDER_PRIVATE_KEY = '0x' + '1'.repeat(64);
-    getStealthMetaAddressMock.mockResolvedValue(null);
+    getPaymentProfileMock.mockResolvedValue(EMPTY_PROFILE);
 
     const { handler } = registerAndGetTool(registerSendStealthPayment, 'send-stealth-payment');
     const result = await handler({ to: 'alice.eth', amount: '1', token: 'USDC', chain: 'base' });
@@ -56,9 +66,45 @@ describe('tool:send-stealth-payment', () => {
     expect(result.content[0].text).toContain('No stealth meta-address found for "alice.eth"');
   });
 
+  it('uses recipient preferred chain/token when sender omits them', async () => {
+    process.env.SENDER_PRIVATE_KEY = '0x' + '1'.repeat(64);
+    getPaymentProfileMock.mockResolvedValue({
+      ...EMPTY_PROFILE,
+      stealthMetaAddress: 'st:eth:0xabc',
+      preferredChain: 'base',
+      preferredToken: 'USDC',
+    });
+    generateStealthAddressMock.mockReturnValue({
+      stealthAddress: '0x3333333333333333333333333333333333333333',
+      ephemeralPublicKey: '0x02bb',
+      viewTag: '0xaa',
+    });
+    sendToStealthMock.mockResolvedValue({
+      transferTxHash: '0xtransfer',
+      announceTxHash: '0xannounce',
+      tokenLabel: 'USDC',
+    });
+
+    const { handler } = registerAndGetTool(registerSendStealthPayment, 'send-stealth-payment');
+    // No token or chain specified by sender
+    const result = await handler({ to: 'alice.eth', amount: '1' });
+
+    expect(result.isError).toBeUndefined();
+    expect(sendToStealthMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: 'USDC',
+        chain: 'base',
+      }),
+    );
+    expect(result.content[0].text).toContain('(recipient preference)');
+  });
+
   it('returns warning block when announce step fails', async () => {
     process.env.SENDER_PRIVATE_KEY = '2'.repeat(64); // no 0x on purpose
-    getStealthMetaAddressMock.mockResolvedValue('st:eth:0xabc');
+    getPaymentProfileMock.mockResolvedValue({
+      ...EMPTY_PROFILE,
+      stealthMetaAddress: 'st:eth:0xabc',
+    });
     generateStealthAddressMock.mockReturnValue({
       stealthAddress: '0x3333333333333333333333333333333333333333',
       ephemeralPublicKey: '0x02bb',
@@ -68,11 +114,11 @@ describe('tool:send-stealth-payment', () => {
       transferTxHash: '0xtransfer',
       announceTxHash: null,
       announceFailed: true,
-      tokenLabel: 'USDC',
+      tokenLabel: 'ETH',
     });
 
     const { handler } = registerAndGetTool(registerSendStealthPayment, 'send-stealth-payment');
-    const result = await handler({ to: 'alice.eth', amount: '1', token: 'USDC', chain: 'base' });
+    const result = await handler({ to: 'alice.eth', amount: '1', token: 'ETH', chain: 'base' });
 
     expect(result.isError).toBeUndefined();
     expect(sendToStealthMock).toHaveBeenCalledWith(
