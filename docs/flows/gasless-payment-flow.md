@@ -1,23 +1,22 @@
-# Gasless Payment Flow (Draft)
+# Future Development: Gasless Payment Flow
 
-## Goal
+## Scope Status
 
-Describe a sponsored transaction path when available through EVM MCP/integrator stack.
+Gasless payments are explicitly out of scope for the hackathon MVP.
 
-## Baseline Sequence
+This document captures a future direction only.
+
+## Future Sequence (Non-MVP)
 
 1. Agent resolves preferences and stealth destination.
-2. Agent requests `send-stealth-payment(params)` with gasless preference.
-3. StealthPay MCP checks whether EVM MCP supports sponsored execution on chain.
-4. If available, EVM MCP submits sponsored tx.
-5. StealthPay MCP returns tx hash/status to caller.
+2. Agent requests `send-stealth-payment(params)` with sponsored intent metadata.
+3. StealthPay MCP checks whether EVM MCP/integrator supports sponsorship on the selected chain.
+4. If available, unsigned payload is signed and relayed through sponsor infrastructure.
+5. StealthPay MCP returns tx hash/status and sponsorship metadata.
 
-## Constraints
+## Requirements for Future Rollout
 
-- gasless behavior depends on EVM MCP capability per chain
-- tool response must declare whether route was sponsored or not
-
-## Open Questions
-
-- [TODO] Final sponsor policy and limits.
-- [TODO] Whether gasless support ships in MVP or post-hackathon.
+- sponsor policy definition (quotas, anti-abuse rules)
+- standardized sponsorship result schema
+- chain-by-chain compatibility matrix
+- failure fallback to regular non-sponsored tx path

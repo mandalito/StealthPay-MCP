@@ -52,6 +52,7 @@ Underlying onchain pieces in scope:
 - [MCP Server Specification](docs/specifications/mcp-server-spec.md)
 - [Payment Profile Schema](docs/specifications/payment-profile-schema.md)
 - [ENS Text Record Keys](docs/specifications/ens-text-record-keys.md)
+- [Network Support Status](docs/specifications/network-support.md)
 - [MCP Composition](docs/architecture/mcp-composition.md)
 - [System Overview](docs/architecture/system-overview.md)
 - [Agentic Payment Flow](docs/flows/agentic-payment-flow.md)
@@ -63,6 +64,10 @@ Underlying onchain pieces in scope:
 - MCP implementation
 - Documentation (specs, README, examples)
 - Tests
+
+## Scope Note
+
+Gasless payments are a future development item and are not part of the hackathon MVP scope.
 
 ## Keeping In Sync
 

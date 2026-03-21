@@ -12,7 +12,6 @@ Define a machine-readable payment profile derived from ENS data and consumed by 
 - `preferred_tokens` (ordered)
 - `privacy_mode` (`public` | `stealth_preferred` | `stealth_required`)
 - `stealth_meta_address`
-- `gasless_preference` (`disabled` | `preferred`)
 - `updated_at`
 
 ## JSON Example
@@ -25,7 +24,6 @@ Define a machine-readable payment profile derived from ENS data and consumed by 
   "preferred_tokens": ["USDC", "ETH"],
   "privacy_mode": "stealth_preferred",
   "stealth_meta_address": "st:eth:0x...",
-  "gasless_preference": "preferred",
   "updated_at": "2026-03-21T00:00:00Z"
 }
 ```
@@ -48,3 +46,7 @@ Define a machine-readable payment profile derived from ENS data and consumed by 
 - Base
 - OP (Optimism)
 - Arbitrum
+
+## Future Extensions (Non-MVP)
+
+- `gasless_preference` may be added in a post-hackathon schema version.

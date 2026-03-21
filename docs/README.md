@@ -13,6 +13,7 @@ docs/
     mcp-server-spec.md
     ens-text-record-keys.md
     payment-profile-schema.md
+    network-support.md
   architecture/
     mcp-composition.md
     system-overview.md

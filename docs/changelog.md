@@ -1,5 +1,11 @@
 # Documentation Changelog
 
+## v0.5.0 - 2026-03-21T12:23:17+01:00
+
+- Marked gasless transactions as future development (not hackathon MVP scope).
+- Added `docs/specifications/network-support.md` with current Hoodi support status.
+- Added README/docs index links for network support documentation.
+
 ## v0.4.0 - 2026-03-21T12:21:59+01:00
 
 - Updated `send-stealth-payment` spec to support dual execution modes:

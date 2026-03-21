@@ -24,6 +24,7 @@ In scope:
 Out of scope (hackathon baseline):
 
 - custom stealth cryptography implementation
+- gasless/sponsored transactions
 - full wallet UI product
 - production-grade multi-chain operations at scale
 
@@ -60,5 +61,4 @@ Out of scope (hackathon baseline):
 ## Open Questions
 
 - [TODO] Final canonical ENS text-record keys for payment preferences.
-- [TODO] MVP definition for gasless behavior in this hackathon.
 - [TODO] Minimum chain set at launch (Ethereum/Base/OP/Arbitrum or subset).
