@@ -1,6 +1,6 @@
 # Consolidated TODO
 
-Last updated: 2026-03-22T07:31:12+01:00
+Last updated: 2026-03-22T07:34:00+01:00
 Owner: documentation track
 
 This file is the single backlog for cross-cutting follow-up work (docs, security, tests, implementation alignment).
@@ -46,6 +46,15 @@ This file is the single backlog for cross-cutting follow-up work (docs, security
 - [ ] Implement agent risk limits for transaction execution:
   - evaluate Account Abstraction guard patterns (ERC-4337 / smart account policy modules)
   - add MCP-native policy controls (per-tx caps, daily spend limits, token/chain allowlists, destination allowlists)
+- [ ] Enforce policy immutability from the agent path:
+  - do not expose any MCP tool that can modify limits or policy state
+  - enforce policy checks on every tx path (`send-stealth-payment`, claim/withdraw execution paths)
+  - keep policy storage writable only by operator/admin context (not by agent/runtime call path)
+- [ ] Add signed policy-governance model (separate from spend keys):
+  - require policy updates to be signed artifacts verified by a pinned policy-admin public key
+  - use a dedicated policy-admin key (or multisig/hardware signer), not the sender spending key
+  - include policy versioning + effective time + rollback protection
+  - add audit logging for accepted/rejected policy update attempts
 
 ## P1 - Network / Deployment Clarity
 
