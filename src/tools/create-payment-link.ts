@@ -2,6 +2,12 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { createPaymentLink } from '../lib/payments.js';
 
+const paymentLinkOutputSchema = z.object({
+  webUrl: z.string(),
+  erc681Uri: z.string().nullable(),
+  recipient: z.string(),
+});
+
 export function registerCreatePaymentLink(server: McpServer) {
   server.registerTool(
     'create-payment-link',
@@ -9,6 +15,8 @@ export function registerCreatePaymentLink(server: McpServer) {
       title: 'Create Payment Link',
       description:
         'Generate a shareable payment link for an ENS name. The link resolves to a stealth address at payment time, ensuring privacy.',
+      outputSchema: paymentLinkOutputSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
       inputSchema: z.object({
         to: z.string().describe('Recipient ENS name (e.g. "vitalik.eth")'),
         amount: z.string().optional().describe('Suggested amount (e.g. "50.00")'),
@@ -39,6 +47,11 @@ export function registerCreatePaymentLink(server: McpServer) {
         );
 
         return {
+          structuredContent: {
+            webUrl,
+            erc681Uri: erc681Uri ?? null,
+            recipient: to,
+          },
           content: [{ type: 'text' as const, text: lines.join('\n') }],
         };
       } catch (error) {

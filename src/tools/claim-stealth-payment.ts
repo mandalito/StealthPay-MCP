@@ -41,6 +41,7 @@ export function registerClaimStealthPayment(server: McpServer) {
           .describe(`Chain (default: ${DEFAULT_CHAIN}). Supported: ${Object.keys(SUPPORTED_CHAINS).join(', ')}`),
       }),
       outputSchema: claimOutputSchema,
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
     },
     async ({ ephemeralPublicKey, to, token, amount, chain }) => {
       try {

@@ -21,6 +21,7 @@ export function registerGenerateStealthAddress(server: McpServer) {
         name: z.string().describe('ENS name of the recipient (e.g. "vitalik.eth")'),
       }),
       outputSchema: stealthAddressOutputSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false },
     },
     async ({ name }) => {
       try {

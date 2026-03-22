@@ -41,6 +41,7 @@ export function registerSendStealthPayment(server: McpServer) {
           .describe('Optional payment note/memo. Encoded in the ERC-5564 announcement metadata so the recipient can read it when scanning.'),
       }),
       outputSchema: sendOutputSchema,
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
     },
     async ({ to, amount, token, chain, memo }) => {
       try {

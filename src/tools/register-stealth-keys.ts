@@ -4,6 +4,15 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { registerStealthKeys } from '../lib/ens-register.js';
 import { ENS_CONTRACTS, explorerTxUrl } from '../config.js';
 
+const stealthKeysOutputSchema = z.object({
+  name: z.string(),
+  stealthMetaAddress: z.string(),
+  txHash: z.string(),
+  registryTxHash: z.string().nullable(),
+  keysReused: z.boolean(),
+  chain: z.string(),
+});
+
 export function registerRegisterStealthKeys(server: McpServer) {
   server.registerTool(
     'register-stealth-keys',
@@ -11,6 +20,8 @@ export function registerRegisterStealthKeys(server: McpServer) {
       title: 'Register Stealth Keys',
       description:
         'Generate spending and viewing keypairs, then set the stealth-meta-address text record on an ENS name. The caller must own/manage the ENS name. Private keys are saved directly to the .env file — they are never returned to the AI.',
+      outputSchema: stealthKeysOutputSchema,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
       inputSchema: z.object({
         name: z
           .string()
@@ -97,6 +108,14 @@ export function registerRegisterStealthKeys(server: McpServer) {
         lines.push('', `Anyone can now send stealth payments to ${result.name}.`);
 
         return {
+          structuredContent: {
+            name: result.name,
+            stealthMetaAddress: result.stealthMetaAddress,
+            txHash: result.txHash,
+            registryTxHash: result.registryTxHash ?? null,
+            keysReused: result.keysReused,
+            chain,
+          },
           content: [{
             type: 'text' as const,
             text: lines.join('\n'),

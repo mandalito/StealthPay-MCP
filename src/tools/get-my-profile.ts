@@ -43,6 +43,17 @@ async function getEnsNamesForAddress(address: string, chainName: string): Promis
   }
 }
 
+const myProfileOutputSchema = z.object({
+  address: z.string(),
+  primaryEnsName: z.string().nullable(),
+  ownedEnsNames: z.array(z.string()),
+  stealthConfigured: z.boolean(),
+  stealthMetaAddress: z.string().nullable(),
+  viewingKeyConfigured: z.boolean(),
+  spendingKeyConfigured: z.boolean(),
+  chain: z.string(),
+});
+
 export function registerGetMyProfile(server: McpServer) {
   server.registerTool(
     'get-my-profile',
@@ -51,6 +62,8 @@ export function registerGetMyProfile(server: McpServer) {
       description:
         'Show your own wallet address, all ENS names you own, and stealth payment profile. Reads SENDER_PRIVATE_KEY from environment — the key itself is never exposed.',
       inputSchema: z.object({}),
+      outputSchema: myProfileOutputSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     },
     async () => {
       try {
@@ -107,8 +120,10 @@ export function registerGetMyProfile(server: McpServer) {
         }
 
         // Show stealth profile for primary name
+        let stealthMeta: string | null = null;
         if (primaryName) {
           const profile = await getPaymentProfile(primaryName);
+          stealthMeta = profile.stealthMetaAddress ?? null;
 
           if (profile.avatar) lines.push(``, `Avatar: ${profile.avatar}`);
           if (profile.description) lines.push(`Description: ${profile.description}`);
@@ -120,8 +135,8 @@ export function registerGetMyProfile(server: McpServer) {
             lines.push(``, `⚠️ No stealth keys registered on ${primaryName}. Run /stealthpay-setup to enable stealth payments.`);
           }
         } else if (ownedNames.length > 0) {
-          // Check stealth keys on the first owned name
           const firstProfile = await getPaymentProfile(ownedNames[0]);
+          stealthMeta = firstProfile.stealthMetaAddress ?? null;
           if (firstProfile.stealthMetaAddress) {
             lines.push(``, `Stealth keys found on **${ownedNames[0]}**: \`${firstProfile.stealthMetaAddress}\``);
             lines.push(`✅ Ready to receive stealth payments.`);
@@ -145,6 +160,16 @@ export function registerGetMyProfile(server: McpServer) {
         }
 
         return {
+          structuredContent: {
+            address: account.address,
+            primaryEnsName: primaryName ?? null,
+            ownedEnsNames: ownedNames,
+            stealthConfigured: !!stealthMeta,
+            stealthMetaAddress: stealthMeta ?? null,
+            viewingKeyConfigured: !!process.env.RECIPIENT_VIEWING_PRIVATE_KEY,
+            spendingKeyConfigured: !!process.env.RECIPIENT_SPENDING_PUBLIC_KEY,
+            chain: chainName,
+          },
           content: [{ type: 'text' as const, text: lines.join('\n') }],
         };
       } catch (error) {

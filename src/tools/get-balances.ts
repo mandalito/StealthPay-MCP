@@ -4,6 +4,16 @@ import { createPublicClient, http, formatEther, formatUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { SUPPORTED_CHAINS, STABLECOINS, ERC20_ABI, DEFAULT_CHAIN } from '../config.js';
 
+const balancesOutputSchema = z.object({
+  address: z.string(),
+  chain: z.string(),
+  ethBalance: z.string(),
+  tokens: z.array(z.object({
+    symbol: z.string(),
+    balance: z.string(),
+  })),
+});
+
 export function registerGetBalances(server: McpServer) {
   server.registerTool(
     'get-balances',
@@ -17,6 +27,8 @@ export function registerGetBalances(server: McpServer) {
           .default(DEFAULT_CHAIN)
           .describe(`Chain to check (default: ${DEFAULT_CHAIN}). Supported: ${Object.keys(SUPPORTED_CHAINS).join(', ')}`),
       }),
+      outputSchema: balancesOutputSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     },
     async ({ chain }) => {
       try {
@@ -62,6 +74,7 @@ export function registerGetBalances(server: McpServer) {
 
         // Fetch known token balances for this chain
         const chainTokens = STABLECOINS[chain];
+        const tokenBalances: Array<{ symbol: string; balance: string }> = [];
         if (chainTokens && Object.keys(chainTokens).length > 0) {
           const tokenEntries = Object.entries(chainTokens);
 
@@ -88,6 +101,7 @@ export function registerGetBalances(server: McpServer) {
             if (result.status === 'fulfilled') {
               const { symbol, balance, decimals } = result.value;
               const formatted = formatUnits(balance, decimals);
+              tokenBalances.push({ symbol, balance: formatted });
               if (balance > 0n) {
                 lines.push(`${symbol}: ${formatted}`);
               } else {
@@ -104,6 +118,12 @@ export function registerGetBalances(server: McpServer) {
         }
 
         return {
+          structuredContent: {
+            address: account.address,
+            chain,
+            ethBalance: formatEther(ethBalance),
+            tokens: tokenBalances,
+          },
           content: [{ type: 'text' as const, text: lines.join('\n') }],
         };
       } catch (error) {

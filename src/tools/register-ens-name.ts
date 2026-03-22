@@ -3,6 +3,16 @@ import { z } from 'zod';
 import { registerEnsName } from '../lib/ens-register.js';
 import { ENS_CONTRACTS, explorerTxUrl } from '../config.js';
 
+const ensRegisterOutputSchema = z.object({
+  name: z.string(),
+  owner: z.string(),
+  cost: z.string(),
+  expiresIn: z.string(),
+  commitTxHash: z.string(),
+  registerTxHash: z.string(),
+  chain: z.string(),
+});
+
 export function registerRegisterEnsName(server: McpServer) {
   server.registerTool(
     'register-ens-name',
@@ -10,6 +20,8 @@ export function registerRegisterEnsName(server: McpServer) {
       title: 'Register ENS Name',
       description:
         'Register a new .eth ENS name. Checks availability, computes cost, and completes the commit-wait-register flow. Takes ~65 seconds due to the commitment waiting period. Uses SENDER_PRIVATE_KEY from environment.',
+      outputSchema: ensRegisterOutputSchema,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
       inputSchema: z.object({
         label: z
           .string()
@@ -49,6 +61,15 @@ export function registerRegisterEnsName(server: McpServer) {
         );
 
         return {
+          structuredContent: {
+            name: result.name,
+            owner: result.owner,
+            cost: result.cost,
+            expiresIn: result.expiresIn,
+            commitTxHash: result.commitTxHash,
+            registerTxHash: result.registerTxHash,
+            chain,
+          },
           content: [{
             type: 'text' as const,
             text: [

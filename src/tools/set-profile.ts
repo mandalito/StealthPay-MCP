@@ -11,6 +11,13 @@ import {
   isValidStealthPolicy, isValidNotePolicy, isValidNotePrivacy,
 } from '../lib/profile.js';
 
+const setProfileOutputSchema = z.object({
+  name: z.string(),
+  updatedFields: z.array(z.string()),
+  txCount: z.number(),
+  chain: z.string(),
+});
+
 export function registerSetProfile(server: McpServer) {
   server.registerTool(
     'set-profile',
@@ -18,6 +25,8 @@ export function registerSetProfile(server: McpServer) {
       title: 'Set Payment Profile',
       description:
         'Set payment preferences on your ENS name: preferred chain, token, stealth policy, and note preferences. Writes to both namespaced (stealthpay.v1.*) and legacy ENS text records for compatibility.',
+      outputSchema: setProfileOutputSchema,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
       inputSchema: z.object({
         name: z
           .string()
@@ -205,6 +214,12 @@ export function registerSetProfile(server: McpServer) {
         }
 
         return {
+          structuredContent: {
+            name,
+            updatedFields: updates.map(u => u.label),
+            txCount: txHashes.length,
+            chain: ensChain,
+          },
           content: [{ type: 'text' as const, text: lines.join('\n') }],
         };
       } catch (error) {

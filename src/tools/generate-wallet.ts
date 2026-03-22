@@ -3,6 +3,11 @@ import { z } from 'zod';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 
+const walletOutputSchema = z.object({
+  address: z.string(),
+  alreadyExisted: z.boolean(),
+});
+
 export function registerGenerateWallet(server: McpServer) {
   server.registerTool(
     'generate-wallet',
@@ -11,6 +16,8 @@ export function registerGenerateWallet(server: McpServer) {
       description:
         'Generate a new wallet keypair and save it to .env. The private key never leaves the Node.js process — only the address is returned. Will NOT overwrite an existing SENDER_PRIVATE_KEY.',
       inputSchema: z.object({}),
+      outputSchema: walletOutputSchema,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
     },
     async () => {
       try {
@@ -21,6 +28,10 @@ export function registerGenerateWallet(server: McpServer) {
             (existingKey.startsWith('0x') ? existingKey : `0x${existingKey}`) as `0x${string}`
           );
           return {
+            structuredContent: {
+              address: existingAccount.address,
+              alreadyExisted: true,
+            },
             content: [
               {
                 type: 'text' as const,
@@ -54,6 +65,10 @@ export function registerGenerateWallet(server: McpServer) {
         process.env.SENDER_PRIVATE_KEY = privateKey;
 
         return {
+          structuredContent: {
+            address: account.address,
+            alreadyExisted: false,
+          },
           content: [
             {
               type: 'text' as const,

@@ -40,6 +40,7 @@ export function registerScanAnnouncements(server: McpServer) {
           .describe('End block number (defaults to latest)'),
       }),
       outputSchema: scanOutputSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     },
     async ({ chain, fromBlock, toBlock }) => {
       try {

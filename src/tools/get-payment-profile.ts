@@ -30,6 +30,7 @@ export function registerGetPaymentProfile(server: McpServer) {
         name: z.string().describe('ENS name (e.g. "vitalik.eth")'),
       }),
       outputSchema: paymentProfileOutputSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     },
     async ({ name }) => {
       try {
