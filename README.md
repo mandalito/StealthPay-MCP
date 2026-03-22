@@ -39,10 +39,11 @@ Each payment can use a fresh address, so receipts are harder to correlate public
 
 StealthPay is not trying to replace those products. It focuses on a different layer:
 
-1. **Agent-first integration**: MCP tool interface for AI/native automation flows.
-2. **ENS-driven payment context**: recipient preferences are part of routing logic, not just identity resolution.
-3. **End-to-end machine flow**: resolve identity -> generate stealth destination -> pay -> scan -> claim, from one MCP surface.
-4. **Security posture for AI usage**: recipient claiming is designed around env-based keys, avoiding private-key exposure in prompt/tool inputs.
+1. **MCP-native (agentic) interface**: StealthPay exposes tools through MCP for AI/agent orchestration; Umbra and Fluidkey are not MCP tool surfaces.
+2. **Programmable payment profiles**: StealthPay routes payments from ENS-stored machine-readable preferences (chain/token/UX policy), not only identity lookup.
+3. **Centralization model**: StealthPay is an open, self-hostable MCP server; Fluidkey is a managed product with centralized service components.
+4. **Stealth standard positioning**: Umbra pioneered stealth payments, but its original architecture predates the latest stealth-address standardization work; StealthPay targets ERC-5564-style announcement/scan flows in an agent-friendly pipeline.
+5. **End-to-end machine flow**: resolve identity -> generate stealth destination -> pay -> scan -> claim, from one MCP surface.
 
 ## Example use cases
 

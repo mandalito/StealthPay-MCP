@@ -1,5 +1,12 @@
 # Documentation Changelog
 
+## v0.16.0 - 2026-03-22T07:04:23+01:00
+
+- Refined README comparison section against Umbra/Fluidkey.
+- Added explicit points on MCP-native agent interface and ENS programmable payment profiles.
+- Clarified architecture positioning: StealthPay self-hostable MCP layer vs Fluidkey managed service components.
+- Clarified stealth-standard positioning: Umbra origins vs StealthPay ERC-5564-style announcement/scan pipeline.
+
 ## v0.15.0 - 2026-03-22T06:52:40+01:00
 
 - Reworked the README opening section with explicit hackathon context and official event links.
