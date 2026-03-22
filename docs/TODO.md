@@ -1,12 +1,17 @@
 # Consolidated TODO
 
-Last updated: 2026-03-22T08:23:51+01:00
+Last updated: 2026-03-22T08:48:11+01:00
 Owner: documentation track
 
 This file is the single backlog for cross-cutting follow-up work (docs, security, tests, implementation alignment).
 
 ## Done (Recent)
 
+- [x] Test alignment follow-up completed:
+  - fixed `npm run test:ens` to use a dedicated integration Vitest config
+  - made the ENS live integration suite require explicit `ENS_RPC_URL` to avoid public-RPC rate-limit flake
+  - added direct `test/tools/set-profile.test.ts` coverage for policy guard + dual-write behavior
+  - reconciled testing/docs references to the current 12-tool MCP surface
 - [x] Added payment-profile standards alignment audit:
   - `docs/audits/2026-03-22-payment-profile-standards-alignment-report.md`
   - clarified ENS data model: text records are flat key/value; thematic grouping must use namespaced keys (not nested categories)
@@ -49,7 +54,7 @@ This file is the single backlog for cross-cutting follow-up work (docs, security
 
 ## P0 - Documentation / API Alignment
 
-- [x] Reconcile all docs/examples with the current registered MCP endpoints (11 tools):
+- [x] Reconcile all docs/examples with the current registered MCP endpoints (13 tools):
   - remove `derive-stealth-key` and `withdraw-from-stealth` from endpoint docs where still listed
   - update recipient flow docs to `scan-announcements` + `claim-stealth-payment`
 - [x] Update `docs/examples/mcp-tool-usage.md` to remove key-bearing input examples and show env-only scan usage.
@@ -151,3 +156,7 @@ This file is the single backlog for cross-cutting follow-up work (docs, security
   - stable deterministic outputs for spend/view pubkeys across restarts
   - no account private key recovery path from published derived public metadata
   - no-op on-chain reconciliation when registry/profile already matches derived keys
+- [ ] Add direct unit coverage for `src/lib/withdraw.ts`:
+  - ETH max-withdraw path subtracts gas buffer correctly
+  - insufficient gas / insufficient requested ETH errors stay stable
+  - ERC-20 withdrawal path validates token balance and transfer amount handling

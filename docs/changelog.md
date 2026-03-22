@@ -1,5 +1,12 @@
 # Documentation Changelog
 
+## v0.16.1 - 2026-03-22T08:48:11+01:00
+
+- Fixed `npm run test:ens` so it actually runs `test/ens.integration.test.ts` through a dedicated integration Vitest config.
+- Made the live ENS integration suite require an explicit `ENS_RPC_URL` instead of depending on rate-limited public fallback RPCs; increased the integration-profile timeout to fit live runs.
+- Added direct `set-profile` MCP handler regression coverage for missing sender key, `POLICY_IMMUTABLE`, and dual-write ENS record behavior.
+- Reconciled README and product/testing docs with the current 12-tool MCP surface and active `stealthpay.v1.*` profile parsing behavior.
+
 ## v0.16.0 - 2026-03-22T07:04:23+01:00
 
 - Refined README comparison section against Umbra/Fluidkey.

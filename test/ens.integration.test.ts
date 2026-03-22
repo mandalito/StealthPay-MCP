@@ -1,13 +1,16 @@
 /**
  * Integration test: ENS resolution against mainnet.
- * Requires network access. Uses a well-known ENS name.
+ * Requires network access and an explicit ENS_RPC_URL pointing at mainnet.
+ * Uses a well-known ENS name.
  *
  * Run with: npx vitest run test/ens.integration.test.ts
  */
 import { describe, it, expect } from 'vitest';
 import { getPaymentProfile } from '../src/lib/ens.js';
 
-describe('ENS integration (mainnet)', () => {
+const describeIfEnsRpcConfigured = process.env.ENS_RPC_URL ? describe : describe.skip;
+
+describeIfEnsRpcConfigured('ENS integration (mainnet)', () => {
   it('resolves vitalik.eth to a valid profile', async () => {
     const profile = await getPaymentProfile('vitalik.eth');
 

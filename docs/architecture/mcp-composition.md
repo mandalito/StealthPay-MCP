@@ -14,10 +14,10 @@ StealthPay MCP currently runs as a self-contained server using direct RPC access
 - withdrawal helper
 - agent spend policy engine (caps, limits, allowlists, signed governance, audit logging)
 
-## Tool Groups (12 tools)
+## Tool Groups (13 tools)
 
 - identity: get-my-profile, generate-wallet, get-balances
-- onboarding & profile: register ENS name, register stealth keys, set profile
+- onboarding & profile: register ENS name, register stealth keys, set profile, set primary name
 - sender: resolve profile, generate address, send payment, create link
 - recipient: scan, claim
 

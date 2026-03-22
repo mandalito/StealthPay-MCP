@@ -186,7 +186,7 @@ StealthPay MCP follows one non-negotiable rule:
 
 **Project-only** — add a `.mcp.json` in your project root with the same content.
 
-Then restart Claude Code. The 12 registered tools will be available immediately.
+Then restart Claude Code. The 13 registered tools will be available immediately.
 
 ## Tools
 
@@ -205,6 +205,7 @@ Then restart Claude Code. The 12 registered tools will be available immediately.
 | `register-ens-name` | Register a .eth name (commit → wait → register flow, ~65s) |
 | `register-stealth-keys` | Generate spending/viewing keypairs and set the stealth-meta-address text record on your ENS name |
 | `set-profile` | Set payment preferences on your ENS name: preferred chain, token, stealth policy, and note preferences. Writes to both `stealthpay.v1.*` and legacy ENS text records. |
+| `set-primary-name` | Set the ENS reverse record so your wallet address resolves back to your ENS name. |
 
 ### Sending payments
 
@@ -299,7 +300,7 @@ npm run test:unit
 # Default deterministic suite (unit + tool tests)
 npm test
 
-# ENS integration test (reads mainnet ENS)
+# ENS integration test (reads mainnet ENS; set ENS_RPC_URL for a reliable run)
 npm run test:ens
 
 # Re-check onchain singleton deployments across configured chains

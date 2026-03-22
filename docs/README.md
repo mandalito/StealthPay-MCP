@@ -42,7 +42,7 @@ docs/
 ## Current Baseline
 
 - Hackathon testnet decision: Sepolia
-- Registered MCP endpoint surface is currently 12 tools (`src/index.ts`).
+- Registered MCP endpoint surface is currently 13 tools (`src/index.ts`).
 - Recipient flow baseline is `scan-announcements` -> `claim-stealth-payment` (keys remain server-side).
 - Payment profiles use CAIP-normalized `stealthpay.v1.*` ENS namespace with legacy fallback.
 - Agent spend policy engine enforces per-tx caps, daily limits, and allowlists.

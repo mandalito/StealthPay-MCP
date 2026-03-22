@@ -1,6 +1,6 @@
 # MCP Endpoint Coverage Report
 
-Generated: 2026-03-22T08:30:00+01:00
+Generated: 2026-03-22T08:48:11+01:00
 Branch: main
 
 ## Scope
@@ -15,12 +15,13 @@ Audit of test alignment between currently registered MCP tools and `test/` suite
 4. `register-ens-name`
 5. `register-stealth-keys`
 6. `set-profile`
-7. `get-payment-profile`
-8. `generate-stealth-address`
-9. `send-stealth-payment`
-10. `create-payment-link`
-11. `scan-announcements`
-12. `claim-stealth-payment`
+7. `set-primary-name`
+8. `get-payment-profile`
+9. `generate-stealth-address`
+10. `send-stealth-payment`
+11. `create-payment-link`
+12. `scan-announcements`
+13. `claim-stealth-payment`
 
 ## Deterministic MCP Endpoint Test Files
 
@@ -31,6 +32,8 @@ Audit of test alignment between currently registered MCP tools and `test/` suite
 - `test/tools/get-balances.test.ts`
 - `test/tools/register-ens-name.test.ts`
 - `test/tools/register-stealth-keys.test.ts`
+- `test/tools/set-profile.test.ts`
+- `test/tools/set-primary-name.test.ts`
 - `test/tools/get-payment-profile.test.ts`
 - `test/tools/generate-stealth-address.test.ts`
 - `test/tools/send-stealth-payment.test.ts`
@@ -64,7 +67,8 @@ Audit of test alignment between currently registered MCP tools and `test/` suite
 - `npm run test:tools`
   - Runs MCP endpoint handler tests only (`test/tools`)
 - `npm run test:ens`
-  - Runs ENS live integration test (network-dependent)
+  - Runs ENS live integration test via `vitest.integration.config.ts` (network-dependent)
+  - Requires `ENS_RPC_URL` for a reliable live mainnet RPC; otherwise the suite is skipped to avoid public-RPC rate-limit flake
 - `npm run test:fork`
   - Runs fork-backed integration profile (`test/fork/sepolia-fork.integration.test.ts`)
   - Uses `SEPOLIA_FORK_URL` (or `RPC_URL` fallback) as fork upstream

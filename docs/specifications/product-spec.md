@@ -36,12 +36,13 @@ Out of scope (hackathon MVP):
 ## Current Constraints
 
 - `send-stealth-payment` supports stablecoin transfers on chains configured in `STABLECOINS` (ethereum, base, optimism, arbitrum, polygon, gnosis, sepolia).
+- Sepolia stablecoin routing is wired for `USDC`, `DAI`, and `USDT`.
 - ENS profile parsing uses dual-read: `stealthpay.v1.*` namespaced keys first, legacy keys as fallback.
 - Spend policy is in-memory and resets on server restart.
 
 ## Acceptance Criteria (Current)
 
-- MCP server boots and registers 12 tools.
+- MCP server boots and registers 13 tools.
 - Unit tests for stealth math, payment links, policy engine, note encryption, and profile migration pass.
 - Recipient-side flow (`scan-announcements` + `claim-stealth-payment`) is documented and callable.
 - Agent spend policy is enforced on every transaction path (`send-stealth-payment`, `claim-stealth-payment`).

@@ -9,6 +9,17 @@ export class MockMcpServer {
   registerTool(name: string, config: unknown, handler: ToolHandler) {
     this.tools.set(name, { config, handler });
   }
+
+  tool(name: string, description: string, inputSchema: unknown, handler: ToolHandler) {
+    this.tools.set(name, {
+      config: {
+        title: name,
+        description,
+        inputSchema,
+      },
+      handler,
+    });
+  }
 }
 
 export function registerAndGetTool(

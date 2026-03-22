@@ -14,6 +14,7 @@ import { registerClaimStealthPayment } from '../../src/tools/claim-stealth-payme
 import { registerGenerateWallet } from '../../src/tools/generate-wallet.js';
 import { registerGetBalances } from '../../src/tools/get-balances.js';
 import { registerSetProfile } from '../../src/tools/set-profile.js';
+import { registerSetPrimaryName } from '../../src/tools/set-primary-name.js';
 
 const ALLOWED_TOOLS = [
   'get-my-profile',
@@ -22,6 +23,7 @@ const ALLOWED_TOOLS = [
   'register-ens-name',
   'register-stealth-keys',
   'set-profile',
+  'set-primary-name',
   'get-payment-profile',
   'generate-stealth-address',
   'send-stealth-payment',
@@ -45,13 +47,14 @@ describe('Registered tool list', () => {
   registerGetBalances(server as unknown as any);
   registerRegisterEnsName(server as unknown as any);
   registerRegisterStealthKeys(server as unknown as any);
+  registerSetProfile(server as unknown as any);
+  registerSetPrimaryName(server as unknown as any);
   registerGetPaymentProfile(server as unknown as any);
   registerGenerateStealthAddress(server as unknown as any);
   registerSendStealthPayment(server as unknown as any);
   registerCreatePaymentLink(server as unknown as any);
   registerScanAnnouncements(server as unknown as any);
   registerClaimStealthPayment(server as unknown as any);
-  registerSetProfile(server as unknown as any);
 
   const registeredNames = Array.from(server.tools.keys());
 
