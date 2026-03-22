@@ -74,10 +74,17 @@ describe('tool:get-my-profile', () => {
       ensName: 'alice.eth',
       address: '0xdddddddddddddddddddddddddddddddddddddddd',
       avatar: null,
+      description: 'desc',
+      preferredChains: ['eip155:11155111'],
+      preferredAssets: [],
       preferredChain: 'sepolia',
       preferredToken: 'USDC',
       stealthMetaAddress: 'st:eth:0xabc',
-      description: 'desc',
+      stealthPolicy: 'preferred',
+      stealthSchemeIds: [1],
+      notePolicy: 'optional',
+      noteMaxBytes: 140,
+      notePrivacy: 'plaintext',
     });
 
     const { handler } = registerAndGetTool(registerGetMyProfile, 'get-my-profile');

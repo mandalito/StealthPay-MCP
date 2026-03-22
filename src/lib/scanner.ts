@@ -19,6 +19,7 @@ export interface StealthPayment {
   viewTag: `0x${string}`;
   token: `0x${string}` | null;
   amount: bigint | null;
+  memo: string | null;
   blockNumber: bigint;
   txHash: `0x${string}`;
 }
@@ -119,8 +120,8 @@ export async function scanAnnouncements(params: ScanParams): Promise<StealthPaym
 
       if (!isOurs) continue;
 
-      // Decode metadata: viewTag (1) + selector (4) + tokenAddress (20) + amount (32)
-      const { token, amount } = decodeMetadata(metadata);
+      // Decode metadata: viewTag (1) + selector (4) + tokenAddress (20) + amount (32) + memo (variable)
+      const { token, amount, memo } = decodeMetadata(metadata);
 
       results.push({
         stealthAddress,
@@ -128,6 +129,7 @@ export async function scanAnnouncements(params: ScanParams): Promise<StealthPaym
         viewTag: announcedViewTag,
         token,
         amount,
+        memo,
         blockNumber: log.blockNumber,
         txHash: log.transactionHash,
       });
@@ -140,25 +142,44 @@ export async function scanAnnouncements(params: ScanParams): Promise<StealthPaym
 /**
  * Decode announcement metadata.
  * ERC-5564 format: viewTag (1 byte) + selector (4 bytes) + tokenAddress (20 bytes) + amount (32 bytes) = 57 bytes
+ * Extension: any bytes after position 57 are decoded as a UTF-8 memo/note.
  * Gracefully handles unexpected formats.
  */
 function decodeMetadata(metadata: `0x${string}`): {
   token: `0x${string}` | null;
   amount: bigint | null;
+  memo: string | null;
 } {
   const clean = metadata.slice(2); // remove 0x
 
   // ERC-5564 layout: 1 + 4 + 20 + 32 = 57 bytes = 114 hex chars
   if (clean.length < 114) {
-    return { token: null, amount: null };
+    return { token: null, amount: null, memo: null };
   }
 
   // viewTag: [0, 2)   = 1 byte
   // selector: [2, 10) = 4 bytes
   // token: [10, 50)   = 20 bytes
   // amount: [50, 114) = 32 bytes
+  // memo: [114, ...)  = variable UTF-8 bytes
   const token = `0x${clean.slice(10, 50)}` as `0x${string}`;
   const amount = BigInt(`0x${clean.slice(50, 114)}`);
 
-  return { token, amount };
+  // Decode memo from remaining bytes
+  let memo: string | null = null;
+  if (clean.length > 114) {
+    try {
+      const memoHex = clean.slice(114);
+      const memoBytes = new Uint8Array(memoHex.length / 2);
+      for (let i = 0; i < memoHex.length; i += 2) {
+        memoBytes[i / 2] = parseInt(memoHex.slice(i, i + 2), 16);
+      }
+      const decoded = new TextDecoder('utf-8', { fatal: true }).decode(memoBytes);
+      if (decoded.length > 0) memo = decoded;
+    } catch {
+      // Not valid UTF-8 — ignore
+    }
+  }
+
+  return { token, amount, memo };
 }

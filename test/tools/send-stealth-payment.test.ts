@@ -29,10 +29,17 @@ const EMPTY_PROFILE = {
   ensName: 'alice.eth',
   address: null,
   avatar: null,
+  description: null,
+  preferredChains: [],
+  preferredAssets: [],
   preferredChain: null,
   preferredToken: null,
   stealthMetaAddress: null,
-  description: null,
+  stealthPolicy: 'preferred',
+  stealthSchemeIds: [1],
+  notePolicy: 'optional',
+  noteMaxBytes: 140,
+  notePrivacy: 'plaintext',
 };
 
 describe('tool:send-stealth-payment', () => {

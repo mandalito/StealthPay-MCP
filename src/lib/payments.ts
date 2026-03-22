@@ -57,6 +57,7 @@ export async function sendToStealth(params: {
   privateKey: `0x${string}`;
   ephemeralPublicKey: `0x${string}`;
   viewTag: `0x${string}`;
+  memo?: string;
 }): Promise<{ transferTxHash: string; announceTxHash: string | null; announceFailed?: boolean; tokenLabel: string }> {
   const chainName = params.chain ?? DEFAULT_CHAIN;
   const chain = SUPPORTED_CHAINS[chainName];
@@ -126,7 +127,7 @@ export async function sendToStealth(params: {
 
   // Announce via ERC-5564
   const selector = isNative ? NATIVE_TRANSFER_SELECTOR : ERC20_TRANSFER_SELECTOR;
-  const metadata = encodeAnnouncementMetadata(params.viewTag, selector, metadataTokenAddress, metadataAmount);
+  const metadata = encodeAnnouncementMetadata(params.viewTag, selector, metadataTokenAddress, metadataAmount, params.memo);
 
   let announceTxHash: string | null = null;
   let announceFailed = false;
@@ -150,19 +151,30 @@ export const sendStablecoin = sendToStealth;
 /**
  * Encode metadata for the ERC-5564 announcement.
  * Format per ERC-5564: viewTag (1 byte) ++ selector (4 bytes) ++ tokenAddress (20 bytes) ++ amount (32 bytes)
- * Total: 57 bytes
+ * Optional extension: ++ memo (variable UTF-8 bytes)
+ * Base: 57 bytes, with memo: 57 + memo bytes
  */
 function encodeAnnouncementMetadata(
   viewTag: `0x${string}`,
   selector: string,
   tokenAddress: `0x${string}`,
-  amount: bigint
+  amount: bigint,
+  memo?: string,
 ): `0x${string}` {
   const vt = viewTag.slice(2).padStart(2, '0');
   const sel = selector.replace(/^0x/, '').padStart(8, '0');
   const token = tokenAddress.slice(2).toLowerCase();
   const amt = amount.toString(16).padStart(64, '0');
-  return `0x${vt}${sel}${token}${amt}` as `0x${string}`;
+  let hex = `0x${vt}${sel}${token}${amt}`;
+
+  // Append UTF-8 memo bytes after standard fields
+  if (memo) {
+    const memoBytes = new TextEncoder().encode(memo);
+    const memoHex = Array.from(memoBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    hex += memoHex;
+  }
+
+  return hex as `0x${string}`;
 }
 
 // Chain IDs for ERC-681 URI generation

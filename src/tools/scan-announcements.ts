@@ -12,6 +12,7 @@ const scanOutputSchema = z.object({
     ephemeralPublicKey: z.string(),
     token: z.string().nullable(),
     amount: z.string().nullable(),
+    memo: z.string().nullable(),
     blockNumber: z.string(),
     txHash: z.string(),
   })),
@@ -73,6 +74,7 @@ export function registerScanAnnouncements(server: McpServer) {
             ephemeralPublicKey: p.ephemeralPublicKey,
             token: p.token,
             amount: p.amount !== null ? p.amount.toString() : null,
+            memo: p.memo,
             blockNumber: p.blockNumber.toString(),
             txHash: p.txHash,
           })),
@@ -105,6 +107,9 @@ export function registerScanAnnouncements(server: McpServer) {
             } catch {
               lines.push(`Amount (raw): ${p.amount}`);
             }
+          }
+          if (p.memo) {
+            lines.push(`Memo: ${p.memo}`);
           }
           lines.push(`Block: ${p.blockNumber}`);
           lines.push(`Tx: ${explorerTxUrl(chain, p.txHash)}`);

@@ -34,10 +34,14 @@ export function registerSendStealthPayment(server: McpServer) {
           .string()
           .optional()
           .describe(`Chain to send on. If omitted, uses the recipient's preferred chain or defaults to ${DEFAULT_CHAIN}. Supported: ${Object.keys(SUPPORTED_CHAINS).join(', ')}`),
+        memo: z
+          .string()
+          .optional()
+          .describe('Optional payment note/memo. Encoded in the ERC-5564 announcement metadata so the recipient can read it when scanning.'),
       }),
       outputSchema: sendOutputSchema,
     },
-    async ({ to, amount, token, chain }) => {
+    async ({ to, amount, token, chain, memo }) => {
       try {
         const rawKey = process.env.SENDER_PRIVATE_KEY;
         if (!rawKey) {
@@ -53,8 +57,22 @@ export function registerSendStealthPayment(server: McpServer) {
         }
         const privateKey = (rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as `0x${string}`;
 
-        // 1. Look up recipient profile (stealth meta-address + preferences)
+        // 1. Look up recipient profile (stealth meta-address + preferences + policy)
         const profile = await getPaymentProfile(to);
+
+        // Check stealth policy
+        if (profile.stealthPolicy === 'disabled') {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `"${to}" has disabled stealth payments. Use a transparent payment method instead.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
         if (!profile.stealthMetaAddress) {
           return {
             content: [
@@ -65,6 +83,46 @@ export function registerSendStealthPayment(server: McpServer) {
             ],
             isError: true,
           };
+        }
+
+        // Validate note against recipient policy
+        if (profile.notePolicy === 'required' && !memo) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `"${to}" requires a payment note. Add a memo to your payment.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        if (profile.notePolicy === 'none' && memo) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `"${to}" does not accept payment notes. Remove the memo and try again.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        // Validate note size
+        const memoToSend = memo ?? undefined;
+        if (memoToSend) {
+          const memoBytes = new TextEncoder().encode(memoToSend).length;
+          if (memoBytes > profile.noteMaxBytes) {
+            return {
+              content: [
+                {
+                  type: 'text' as const,
+                  text: `Memo is ${memoBytes} bytes but "${to}" allows max ${profile.noteMaxBytes} bytes. Shorten your note.`,
+                },
+              ],
+              isError: true,
+            };
+          }
         }
 
         // 2. Apply recipient preferences as defaults
@@ -83,6 +141,7 @@ export function registerSendStealthPayment(server: McpServer) {
           privateKey,
           ephemeralPublicKey: stealth.ephemeralPublicKey as `0x${string}`,
           viewTag: stealth.viewTag as `0x${string}`,
+          memo: memoToSend,
         });
 
         const lines = [

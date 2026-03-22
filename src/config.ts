@@ -36,6 +36,77 @@ export const CHAIN_SHORT_NAMES: Record<string, string> = {
   hoodi: 'hoodi',
 };
 
+// CAIP-2 chain identifiers (eip155:<chainId>)
+export const CAIP2_CHAIN_IDS: Record<string, string> = {
+  ethereum: 'eip155:1',
+  base: 'eip155:8453',
+  optimism: 'eip155:10',
+  arbitrum: 'eip155:42161',
+  polygon: 'eip155:137',
+  gnosis: 'eip155:100',
+  sepolia: 'eip155:11155111',
+  hoodi: 'eip155:560048',
+};
+
+// Reverse lookup: CAIP-2 → friendly name
+export const CAIP2_TO_NAME: Record<string, string> = Object.fromEntries(
+  Object.entries(CAIP2_CHAIN_IDS).map(([name, caip]) => [caip, name])
+);
+
+/**
+ * Resolve a chain identifier to a friendly name.
+ * Accepts: friendly name ("base"), CAIP-2 ("eip155:8453"), or returns null.
+ */
+export function resolveChainName(input: string): string | null {
+  if (SUPPORTED_CHAINS[input]) return input;
+  if (CAIP2_TO_NAME[input]) return CAIP2_TO_NAME[input];
+  return null;
+}
+
+/**
+ * Convert a friendly chain name to CAIP-2.
+ */
+export function toCAIP2(chainName: string): string | null {
+  return CAIP2_CHAIN_IDS[chainName] ?? null;
+}
+
+/**
+ * Build a CAIP-19 asset identifier.
+ * Native: eip155:<chainId>/slip44:60
+ * ERC-20: eip155:<chainId>/erc20:<contractAddress>
+ */
+export function toCAIP19(chainName: string, tokenAddress: string): string | null {
+  const caip2 = CAIP2_CHAIN_IDS[chainName];
+  if (!caip2) return null;
+  if (tokenAddress.toUpperCase() === 'ETH' || tokenAddress === '0x0000000000000000000000000000000000000000') {
+    return `${caip2}/slip44:60`;
+  }
+  return `${caip2}/erc20:${tokenAddress.toLowerCase()}`;
+}
+
+/**
+ * Parse a CAIP-19 asset identifier into chain + token info.
+ * Returns null if format is invalid.
+ */
+export function parseCAIP19(caip19: string): { chainName: string; tokenAddress: string; isNative: boolean } | null {
+  const [chainPart, assetPart] = caip19.split('/');
+  if (!chainPart || !assetPart) return null;
+
+  const chainName = CAIP2_TO_NAME[chainPart];
+  if (!chainName) return null;
+
+  if (assetPart === 'slip44:60') {
+    return { chainName, tokenAddress: 'ETH', isNative: true };
+  }
+
+  const erc20Match = assetPart.match(/^erc20:(0x[0-9a-fA-F]{40})$/);
+  if (erc20Match) {
+    return { chainName, tokenAddress: erc20Match[1], isNative: false };
+  }
+
+  return null;
+}
+
 /**
  * Get block explorer URL for a transaction or address.
  */

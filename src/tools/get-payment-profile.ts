@@ -6,11 +6,17 @@ const paymentProfileOutputSchema = z.object({
   ensName: z.string(),
   address: z.string().nullable(),
   avatar: z.string().nullable(),
+  description: z.string().nullable(),
+  preferredChains: z.array(z.string()),
+  preferredAssets: z.array(z.string()),
   preferredChain: z.string().nullable(),
   preferredToken: z.string().nullable(),
   stealthMetaAddress: z.string().nullable(),
-  description: z.string().nullable(),
+  stealthPolicy: z.string(),
   stealthSupported: z.boolean(),
+  notePolicy: z.string(),
+  noteMaxBytes: z.number(),
+  notePrivacy: z.string(),
 });
 
 export function registerGetPaymentProfile(server: McpServer) {
@@ -53,12 +59,24 @@ export function registerGetPaymentProfile(server: McpServer) {
         }
 
         if (profile.avatar) lines.push(`Avatar: ${profile.avatar}`);
-        if (profile.preferredChain) lines.push(`Preferred chain: ${profile.preferredChain}`);
-        if (profile.preferredToken) lines.push(`Preferred token: ${profile.preferredToken}`);
         if (profile.description) lines.push(`Description: ${profile.description}`);
 
+        // Chains and assets
+        if (profile.preferredChains.length > 0) {
+          lines.push(`Preferred chains: ${profile.preferredChains.join(', ')}${profile.preferredChain ? ` (${profile.preferredChain})` : ''}`);
+        } else if (profile.preferredChain) {
+          lines.push(`Preferred chain: ${profile.preferredChain}`);
+        }
+        if (profile.preferredAssets.length > 0) {
+          lines.push(`Preferred assets: ${profile.preferredAssets.join(', ')}${profile.preferredToken ? ` (${profile.preferredToken})` : ''}`);
+        } else if (profile.preferredToken) {
+          lines.push(`Preferred token: ${profile.preferredToken}`);
+        }
+
+        // Stealth
         if (profile.stealthMetaAddress) {
           lines.push(`Stealth meta-address: ${profile.stealthMetaAddress}`);
+          lines.push(`Stealth policy: ${profile.stealthPolicy}`);
           lines.push(`\n✅ This recipient supports stealth payments.`);
         } else {
           lines.push(
@@ -66,16 +84,25 @@ export function registerGetPaymentProfile(server: McpServer) {
           );
         }
 
+        // Note policy
+        lines.push(`Note policy: ${profile.notePolicy} (max ${profile.noteMaxBytes} bytes, ${profile.notePrivacy})`);
+
         return {
           structuredContent: {
             ensName: profile.ensName,
             address: profile.address,
             avatar: profile.avatar,
+            description: profile.description,
+            preferredChains: profile.preferredChains,
+            preferredAssets: profile.preferredAssets,
             preferredChain: profile.preferredChain,
             preferredToken: profile.preferredToken,
             stealthMetaAddress: profile.stealthMetaAddress,
-            description: profile.description,
+            stealthPolicy: profile.stealthPolicy,
             stealthSupported: !!profile.stealthMetaAddress,
+            notePolicy: profile.notePolicy,
+            noteMaxBytes: profile.noteMaxBytes,
+            notePrivacy: profile.notePrivacy,
           },
           content: [{ type: 'text' as const, text: lines.join('\n') }],
         };
