@@ -1,6 +1,6 @@
 # Consolidated TODO
 
-Last updated: 2026-03-22T08:15:00+01:00
+Last updated: 2026-03-22T08:23:51+01:00
 Owner: documentation track
 
 This file is the single backlog for cross-cutting follow-up work (docs, security, tests, implementation alignment).
@@ -110,6 +110,14 @@ This file is the single backlog for cross-cutting follow-up work (docs, security
 - [x] Define and validate note policy fields:
   - `note_policy`, `note_format`, `note_max_bytes`, `note_privacy`
   - avoid assuming universal on-chain memo support across assets
+- [ ] Implement deterministic stealth key fallback to reduce local key sprawl:
+  - if explicit stealth private keys are configured, use them as source of truth
+  - if not configured, derive stealth spending/viewing private keys deterministically from the account private key (domain-separated labels, versioned derivation)
+  - derive in-memory at runtime by default (avoid persisting extra local key files)
+- [ ] Commit/reconcile derived stealth public meta-address on-chain and profile-linked:
+  - register/update ERC-6538 key material when derivation fallback is used
+  - mirror resolver profile linkage in ENS text record strategy (during migration period)
+  - avoid unnecessary writes when on-chain profile already matches derived public keys
 - [x] Implement encrypted notes using existing stealth meta keys (no new key types):
   - baseline mode: encrypt notes with recipient `viewPub`-derived shared secret (ChaCha20-Poly1305 + HKDF-SHA256)
   - sender keeps decrypt capability via stored ephemeral private key
@@ -138,3 +146,8 @@ This file is the single backlog for cross-cutting follow-up work (docs, security
   - dual-write consistency checks
   - strict validation failures for malformed CAIP IDs and policy enums
   Implementation: `test/tools/profile-migration.test.ts`
+- [ ] Add tests for deterministic stealth derivation fallback:
+  - explicit stealth key config takes precedence over derived fallback
+  - stable deterministic outputs for spend/view pubkeys across restarts
+  - no account private key recovery path from published derived public metadata
+  - no-op on-chain reconciliation when registry/profile already matches derived keys
