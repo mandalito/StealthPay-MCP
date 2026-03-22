@@ -1,6 +1,6 @@
 # Consolidated TODO
 
-Last updated: 2026-03-22T07:34:00+01:00
+Last updated: 2026-03-22T08:15:00+01:00
 Owner: documentation track
 
 This file is the single backlog for cross-cutting follow-up work (docs, security, tests, implementation alignment).
@@ -25,6 +25,27 @@ This file is the single backlog for cross-cutting follow-up work (docs, security
   - added `npm run test:fork` and dedicated `vitest.fork.config.ts`
 - [x] Deployment re-check automation added:
   - added `npm run check:deployments` (`scripts/check-deployments.mjs`)
+- [x] Security hardening — full policy engine implemented:
+  - `src/lib/policy.ts`: per-tx caps, daily spend limits, token/chain/destination allowlists
+  - policy checks enforced on `send-stealth-payment` and `claim-stealth-payment`
+  - signed policy-governance model with `POLICY_ADMIN_ADDRESS`, version monotonicity, rollback protection
+  - `POLICY_IMMUTABLE` guard on `set-profile` blocks policy field changes from agent path
+  - audit logging for all policy events (load, check, update accept/reject)
+  - `test/tools/policy.test.ts` with full coverage
+- [x] Encrypted notes implemented:
+  - `src/lib/note-encryption.ts`: ChaCha20-Poly1305 with ECDH key derivation
+  - baseline mode: encrypt with recipient `viewPub`-derived shared secret
+  - dual-envelope mode: wrap CEK for both `spendPub` and `viewPub` paths
+  - integrated into `sendToStealth` — respects recipient `notePrivacy` preference
+  - `test/note-encryption.test.ts` with encrypt/decrypt round-trip tests for both modes
+- [x] Sepolia stablecoin mapping added (USDC, DAI, USDT)
+- [x] ENS key namespace frozen as `stealthpay.v1.*` — spec updated at `docs/specifications/ens-text-record-keys.md`
+- [x] JSON Schema published at `schemas/payment-profile.schema.json`
+  - `test/tools/profile-schema-validation.test.ts` validates schema matches TypeScript types
+- [x] Profile migration tests added:
+  - `test/tools/profile-migration.test.ts`: canonical key precedence, CAIP validation, policy enum validation, dual-write consistency
+- [x] Lint check for private-key-like strings in docs/examples:
+  - `test/tools/no-secrets-in-docs.test.ts` scans all docs/ for 0x + 64-hex patterns
 
 ## P0 - Documentation / API Alignment
 
@@ -42,71 +63,78 @@ This file is the single backlog for cross-cutting follow-up work (docs, security
   - `src/tools/withdraw-from-stealth.ts`
   Current status: deleted from repository; forbidden by registered-tools policy test.
 - [x] Add a regression test that fails if key-bearing tools are accidentally re-registered in `src/index.ts`.
-- [ ] Add a lint/test check that rejects private-key-like strings in docs/examples committed to git.
-- [ ] Implement agent risk limits for transaction execution:
-  - evaluate Account Abstraction guard patterns (ERC-4337 / smart account policy modules)
-  - add MCP-native policy controls (per-tx caps, daily spend limits, token/chain allowlists, destination allowlists)
-- [ ] Enforce policy immutability from the agent path:
-  - do not expose any MCP tool that can modify limits or policy state
-  - enforce policy checks on every tx path (`send-stealth-payment`, claim/withdraw execution paths)
-  - keep policy storage writable only by operator/admin context (not by agent/runtime call path)
-- [ ] Add signed policy-governance model (separate from spend keys):
-  - require policy updates to be signed artifacts verified by a pinned policy-admin public key
-  - use a dedicated policy-admin key (or multisig/hardware signer), not the sender spending key
-  - include policy versioning + effective time + rollback protection
-  - add audit logging for accepted/rejected policy update attempts
+- [x] Add a lint/test check that rejects private-key-like strings in docs/examples committed to git.
+  Implementation: `test/tools/no-secrets-in-docs.test.ts`
+- [x] Implement agent risk limits for transaction execution:
+  - MCP-native policy controls in `src/lib/policy.ts` (per-tx caps, daily spend limits, token/chain/destination allowlists)
+  - ERC-4337 paymaster noted as future enhancement in `src/lib/withdraw.ts`
+- [x] Enforce policy immutability from the agent path:
+  - `POLICY_IMMUTABLE=true` env var blocks policy field changes via `set-profile`
+  - policy checks enforced on both `send-stealth-payment` and `claim-stealth-payment` tx paths
+  - policy storage writable only via env vars or signed policy updates (operator context)
+- [x] Add signed policy-governance model (separate from spend keys):
+  - `POLICY_ADMIN_ADDRESS` env var pins the policy-admin public key
+  - `applySignedPolicyUpdate()` verifies EIP-191 signatures against the admin key
+  - version monotonicity enforced (rollback protection)
+  - `effectiveAt` timestamp validation
+  - audit logging for accepted/rejected policy update attempts
 
 ## P1 - Network / Deployment Clarity
 
 - [x] Add a small script (or npm task) to re-check `eth_getCode` deployment status for announcer/registry across configured chains.
 - [x] Decide whether `hoodi` should remain in `SUPPORTED_CHAINS` while singleton contracts are not deployed there.
   Decision: keep `hoodi` listed for forward compatibility, but treat as non-operational for stealth payment flows until singleton contracts are deployed.
-- [ ] Optionally add Sepolia stablecoin symbol mapping in `STABLECOINS` (if token demos require symbol routing).
+- [x] Optionally add Sepolia stablecoin symbol mapping in `STABLECOINS` (if token demos require symbol routing).
+  Implementation: added USDC, DAI, USDT addresses for Sepolia in `src/config.ts`
 
 ## P1 - Programmable Payment Profile Schema
 
-- [ ] Freeze namespaced ENS key strategy for payment profile fields:
-  - choose canonical prefix (recommended: `io.stealthpay.payments.*`)
-  - keep a migration/alias policy for existing proposal keys (`stealthpay.v1.*`) and legacy keys
-  - document explicitly that ENS grouping is via namespaced flat keys, not nested objects
-- [ ] Implement dual-read parser for ENS keys:
+- [x] Freeze namespaced ENS key strategy for payment profile fields:
+  - canonical prefix: `stealthpay.v1.*` (frozen — `io.stealthpay.payments.*` evaluated and rejected)
+  - migration/alias policy documented in `docs/specifications/ens-text-record-keys.md`
+  - ENS grouping is via namespaced flat keys, not nested objects
+- [x] Implement dual-read parser for ENS keys:
   - read canonical namespaced keys first
   - fallback to existing proposed keys (`stealthpay.v1.*`) if retained
   - fallback to legacy keys (`chain`, `token`, `stealth-meta-address`, `description`)
-- [ ] Implement dual-write in `set-profile` during migration window:
+- [x] Implement dual-write in `set-profile` during migration window:
   - write canonical namespaced keys
   - optionally mirror legacy keys for backwards compatibility
-- [ ] Normalize profile values to standards-oriented identifiers:
+- [x] Normalize profile values to standards-oriented identifiers:
   - chain IDs as CAIP-2
   - account IDs as CAIP-10 (for transparent fallback accounts)
   - asset IDs as CAIP-19 (with user-friendly alias resolution)
-- [ ] Add explicit stealth policy field and enforcement in send flows:
+- [x] Add explicit stealth policy field and enforcement in send flows:
   - enum: `required | preferred | optional | disabled`
   - treat capability (`stealth meta-address exists`) separately from policy
-- [ ] Define and validate note policy fields:
+- [x] Define and validate note policy fields:
   - `note_policy`, `note_format`, `note_max_bytes`, `note_privacy`
   - avoid assuming universal on-chain memo support across assets
-- [ ] Implement encrypted notes using existing stealth meta keys (no new key types):
-  - baseline mode: encrypt notes with recipient `viewPub`-derived shared secret
-  - sender keeps decrypt capability via stored ephemeral private key or derived note key material
-  - define ciphertext envelope format and storage/transport location (on-chain metadata vs off-chain reference)
-- [ ] Evaluate optional dual-envelope mode for note access with `spendPriv OR viewPriv`:
-  - wrap a single content key for both spending and viewing key paths
-  - keep this optional; default mode remains view-key-based encryption
-- [ ] Make MCP read receiver note preferences from ENS payment profile before composing requests:
+- [x] Implement encrypted notes using existing stealth meta keys (no new key types):
+  - baseline mode: encrypt notes with recipient `viewPub`-derived shared secret (ChaCha20-Poly1305 + HKDF-SHA256)
+  - sender keeps decrypt capability via stored ephemeral private key
+  - ciphertext envelope format: `[version][ephPubX][nonce][ciphertext+tag]`
+  - integrated into `sendToStealth` — respects `notePrivacy` profile field
+- [x] Evaluate optional dual-envelope mode for note access with `spendPriv OR viewPriv`:
+  - implemented in `encryptNoteDualEnvelope` / `decryptNoteWithSpendKey`
+  - wraps a random content key (CEK) for both spending and viewing key paths
+  - optional; default mode remains view-key-based encryption (baseline)
+- [x] Make MCP read receiver note preferences from ENS payment profile before composing requests:
   - respect whether notes are preferred/required/optional/disabled
   - enforce note constraints (`max bytes`, privacy/encryption expectations)
   - expose clear user-facing behavior when recipient policy conflicts with sender input
-- [ ] Add ERC-681 output mode to `create-payment-link` and make it default for interoperability:
+- [x] Add ERC-681 output mode to `create-payment-link` and make it default for interoperability:
   - keep current custom HTTPS link format as optional app-specific wrapper
-- [ ] Publish machine-readable payment profile schema (JSON Schema) and use it for parser/tool validation.
+- [x] Publish machine-readable payment profile schema (JSON Schema) and use it for parser/tool validation.
+  Implementation: `schemas/payment-profile.schema.json` + `test/tools/profile-schema-validation.test.ts`
 
 ## P2 - Test Strategy
 
 - [x] Keep deterministic test suites aligned to registered tools only.
 - [x] Add coverage for new env-only `scan-announcements` behavior.
 - [x] Evaluate a Sepolia fork profile for transaction-heavy integration tests.
-- [ ] Add tests for profile migration behavior:
+- [x] Add tests for profile migration behavior:
   - canonical key precedence over legacy keys
   - dual-write consistency checks
   - strict validation failures for malformed CAIP IDs and policy enums
+  Implementation: `test/tools/profile-migration.test.ts`

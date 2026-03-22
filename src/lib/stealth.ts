@@ -158,6 +158,21 @@ export function deriveStealthPrivateKey(params: {
 }
 
 /**
+ * Parse a stealth meta-address and return the raw compressed public keys as hex.
+ * Useful when callers need the keys for encryption or other operations.
+ */
+export function parseStealthMetaAddressKeys(metaAddress: string): {
+  spendingPubKey: `0x${string}`;
+  viewingPubKey: `0x${string}`;
+} {
+  const parsed = parseStealthMetaAddress(metaAddress);
+  return {
+    spendingPubKey: `0x${bytesToHex(parsed.spendingPubKey).replace(/^0x/, '')}` as `0x${string}`,
+    viewingPubKey: `0x${bytesToHex(parsed.viewingPubKey).replace(/^0x/, '')}` as `0x${string}`,
+  };
+}
+
+/**
  * Parse a stealth meta-address into spending and viewing public keys.
  * Format: 0x + spending_pub_key (33 bytes compressed) + viewing_pub_key (33 bytes compressed)
  * If only one key is provided, it's used for both spending and viewing.

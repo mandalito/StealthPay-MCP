@@ -1,9 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { getPaymentProfile } from '../lib/ens.js';
-import { generateStealthAddress } from '../lib/stealth.js';
+import { generateStealthAddress, parseStealthMetaAddressKeys } from '../lib/stealth.js';
 import { sendToStealth } from '../lib/payments.js';
 import { SUPPORTED_CHAINS, DEFAULT_CHAIN, explorerTxUrl } from '../config.js';
+import { checkPolicy, recordSpend } from '../lib/policy.js';
 
 const sendOutputSchema = z.object({
   recipient: z.string(),
@@ -129,10 +130,35 @@ export function registerSendStealthPayment(server: McpServer) {
         const resolvedChain = chain || profile.preferredChain || DEFAULT_CHAIN;
         const resolvedToken = token || profile.preferredToken || 'ETH';
 
+        // 2b. Enforce agent spend policy
+        const amountEth = resolvedToken.toUpperCase() === 'ETH' ? parseFloat(amount) : parseFloat(amount);
+        const policyViolations = checkPolicy({
+          amountEth,
+          chain: resolvedChain,
+          token: resolvedToken,
+          destination: to,
+        });
+        if (policyViolations.length > 0) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `Transaction blocked by spend policy:\n${policyViolations.map(v => `- ${v.message}`).join('\n')}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
         // 3. Generate one-time stealth address
         const stealth = generateStealthAddress(profile.stealthMetaAddress);
 
         // 4. Send funds + announce via ERC-5564
+        // Parse recipient keys for note encryption if needed
+        const recipientKeys = profile.notePrivacy !== 'plaintext' && profile.stealthMetaAddress
+          ? parseStealthMetaAddressKeys(profile.stealthMetaAddress)
+          : null;
+
         const { transferTxHash, announceTxHash, announceFailed, tokenLabel } = await sendToStealth({
           to: stealth.stealthAddress as `0x${string}`,
           amount,
@@ -142,7 +168,13 @@ export function registerSendStealthPayment(server: McpServer) {
           ephemeralPublicKey: stealth.ephemeralPublicKey as `0x${string}`,
           viewTag: stealth.viewTag as `0x${string}`,
           memo: memoToSend,
+          notePrivacy: profile.notePrivacy,
+          recipientViewPub: recipientKeys?.viewingPubKey,
+          recipientSpendPub: recipientKeys?.spendingPubKey,
         });
+
+        // Record spend for daily limit tracking
+        recordSpend(amountEth);
 
         const lines = [
           `Stealth payment sent to **${to}**`,

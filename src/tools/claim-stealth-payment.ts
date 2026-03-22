@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { deriveStealthPrivateKey } from '../lib/stealth.js';
 import { withdrawFromStealth } from '../lib/withdraw.js';
 import { DEFAULT_CHAIN, SUPPORTED_CHAINS, explorerTxUrl } from '../config.js';
+import { checkPolicy, recordSpend } from '../lib/policy.js';
 
 const claimOutputSchema = z.object({
   from: z.string(),
@@ -58,6 +59,26 @@ export function registerClaimStealthPayment(server: McpServer) {
           };
         }
 
+        // Step 0: Enforce agent spend policy on withdraw destination + chain
+        const claimAmount = amount ? parseFloat(amount) : 0; // 0 = full balance, checked post-withdraw
+        const policyViolations = checkPolicy({
+          amountEth: claimAmount,
+          chain,
+          token,
+          destination: to,
+        });
+        if (policyViolations.length > 0) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `Claim blocked by spend policy:\n${policyViolations.map(v => `- ${v.message}`).join('\n')}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
         // Step 1: Derive the stealth private key (never leaves this process)
         const derived = deriveStealthPrivateKey({
           spendingPrivateKey: (spendingPrivateKey.startsWith('0x') ? spendingPrivateKey : `0x${spendingPrivateKey}`) as `0x${string}`,
@@ -73,6 +94,9 @@ export function registerClaimStealthPayment(server: McpServer) {
           amount,
           chain,
         });
+
+        // Record actual withdrawn amount for daily limit tracking
+        recordSpend(parseFloat(result.amount) || 0);
 
         return {
           structuredContent: {

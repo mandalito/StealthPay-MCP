@@ -9,6 +9,8 @@ import {
   ERC5564_ANNOUNCER_ABI,
   SCHEME_ID,
 } from '../config.js';
+import type { NotePrivacy } from './profile.js';
+import { encryptNote, encryptNoteDualEnvelope } from './note-encryption.js';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000' as `0x${string}`;
 
@@ -58,6 +60,9 @@ export async function sendToStealth(params: {
   ephemeralPublicKey: `0x${string}`;
   viewTag: `0x${string}`;
   memo?: string;
+  notePrivacy?: NotePrivacy;
+  recipientViewPub?: `0x${string}`;
+  recipientSpendPub?: `0x${string}`;
 }): Promise<{ transferTxHash: string; announceTxHash: string | null; announceFailed?: boolean; tokenLabel: string }> {
   const chainName = params.chain ?? DEFAULT_CHAIN;
   const chain = SUPPORTED_CHAINS[chainName];
@@ -127,7 +132,26 @@ export async function sendToStealth(params: {
 
   // Announce via ERC-5564
   const selector = isNative ? NATIVE_TRANSFER_SELECTOR : ERC20_TRANSFER_SELECTOR;
-  const metadata = encodeAnnouncementMetadata(params.viewTag, selector, metadataTokenAddress, metadataAmount, params.memo);
+  // Handle note encryption based on recipient privacy preference
+  let memoForMetadata = params.memo;
+  if (params.memo && params.notePrivacy === 'encrypted' && params.recipientViewPub) {
+    if (params.recipientSpendPub) {
+      // Dual-envelope: both view and spend keys can decrypt
+      const { envelope } = encryptNoteDualEnvelope(params.memo, params.recipientViewPub, params.recipientSpendPub);
+      memoForMetadata = envelope; // hex-encoded encrypted envelope
+    } else {
+      // Baseline: only view key can decrypt
+      const { envelope } = encryptNote(params.memo, params.recipientViewPub);
+      memoForMetadata = envelope;
+    }
+  } else if (params.memo && params.notePrivacy === 'hash_only') {
+    // Store only a keccak256 hash of the memo
+    const { keccak256: viemKeccak } = await import('viem/utils');
+    const memoBytes = new TextEncoder().encode(params.memo);
+    const memoHex = Array.from(memoBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    memoForMetadata = viemKeccak(`0x${memoHex}` as `0x${string}`);
+  }
+  const metadata = encodeAnnouncementMetadata(params.viewTag, selector, metadataTokenAddress, metadataAmount, memoForMetadata);
 
   let announceTxHash: string | null = null;
   let announceFailed = false;

@@ -82,6 +82,17 @@ export function registerSetProfile(server: McpServer) {
           };
         }
 
+        // Guard: if POLICY_IMMUTABLE=true, block policy field changes from agent path
+        if (process.env.POLICY_IMMUTABLE === 'true' && (stealthPolicy || notePolicy || noteMaxBytes !== undefined || notePrivacy)) {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: 'Policy fields (stealthPolicy, notePolicy, noteMaxBytes, notePrivacy) are immutable. POLICY_IMMUTABLE is set. Policy changes require a signed policy update from the operator.',
+            }],
+            isError: true,
+          };
+        }
+
         const account = privateKeyToAccount(privateKey);
         const rpcUrl = process.env.ENS_RPC_URL ?? process.env.RPC_URL;
         const publicClient = createPublicClient({ chain: viemChain, transport: http(rpcUrl) });

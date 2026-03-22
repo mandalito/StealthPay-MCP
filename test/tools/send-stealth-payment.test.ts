@@ -17,6 +17,10 @@ vi.mock('../../src/lib/ens.js', () => ({
 
 vi.mock('../../src/lib/stealth.js', () => ({
   generateStealthAddress: generateStealthAddressMock,
+  parseStealthMetaAddressKeys: () => ({
+    spendingPubKey: '0x02' + 'aa'.repeat(32),
+    viewingPubKey: '0x02' + 'bb'.repeat(32),
+  }),
 }));
 
 vi.mock('../../src/lib/payments.js', () => ({
@@ -24,6 +28,7 @@ vi.mock('../../src/lib/payments.js', () => ({
 }));
 
 import { registerSendStealthPayment } from '../../src/tools/send-stealth-payment.js';
+import { loadPolicyFromEnv } from '../../src/lib/policy.js';
 
 const EMPTY_PROFILE = {
   ensName: 'alice.eth',
@@ -47,6 +52,10 @@ describe('tool:send-stealth-payment', () => {
 
   beforeEach(() => {
     process.env.SENDER_PRIVATE_KEY = originalSenderKey;
+    // Raise policy limits for test sends
+    process.env.POLICY_MAX_PER_TX = '1000';
+    process.env.POLICY_MAX_DAILY_SPEND = '10000';
+    loadPolicyFromEnv();
     getPaymentProfileMock.mockReset();
     generateStealthAddressMock.mockReset();
     sendToStealthMock.mockReset();

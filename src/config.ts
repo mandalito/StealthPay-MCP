@@ -154,6 +154,11 @@ export const STABLECOINS: Record<string, Record<string, `0x${string}`>> = {
     USDC: '0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83',
     WXDAI: '0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d',
   },
+  sepolia: {
+    USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+    DAI: '0x68194a729C2450ad26072b3D33ADaCbcef39D574',
+    USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
+  },
 };
 
 // ERC-20 ABI (minimal — just what we need for transfers)
