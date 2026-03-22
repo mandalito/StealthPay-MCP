@@ -72,11 +72,26 @@ Not currently present as first-class normalized fields:
 5. Payment request URLs are not ERC-681.
 - Custom URL works for your app but not generalized wallet ecosystems.
 
+## ENS Data Model Clarification
+
+ENS text records are a **flat** key-value map (`text(node, key) -> string`), not a nested JSON document model.
+
+Practical implication for thematic grouping:
+
+- You cannot create a true nested category like `paymentsPreferences.{...}` at the resolver level.
+- You can group logically by key prefix/namespace, for example:
+  - `io.stealthpay.payments.preferred_chains`
+  - `io.stealthpay.payments.preferred_assets`
+  - `io.stealthpay.payments.stealth_policy`
+  - `io.stealthpay.payments.note_policy`
+- If desired, you may store a JSON blob in one key (for example `io.stealthpay.payments`), but that is an app convention and reduces per-field discoverability/interoperability versus explicit keys.
+
 ## Recommendations
 
 ## 1) Adopt a Versioned, Namespaced Profile Keyset (High)
 
-Move to service-key namespacing in ENS text records (dual-read during migration):
+Move to service-key namespacing in ENS text records (dual-read during migration).  
+This is how to represent thematic groups in ENS: by namespaced flat keys, not nested objects.
 
 - `stealthpay.v1.profile_version = "1"`
 - `stealthpay.v1.preferred_chains = "eip155:8453,eip155:1"` (CAIP-2 list)
