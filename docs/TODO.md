@@ -86,6 +86,17 @@ This file is the single backlog for cross-cutting follow-up work (docs, security
 - [ ] Define and validate note policy fields:
   - `note_policy`, `note_format`, `note_max_bytes`, `note_privacy`
   - avoid assuming universal on-chain memo support across assets
+- [ ] Implement encrypted notes using existing stealth meta keys (no new key types):
+  - baseline mode: encrypt notes with recipient `viewPub`-derived shared secret
+  - sender keeps decrypt capability via stored ephemeral private key or derived note key material
+  - define ciphertext envelope format and storage/transport location (on-chain metadata vs off-chain reference)
+- [ ] Evaluate optional dual-envelope mode for note access with `spendPriv OR viewPriv`:
+  - wrap a single content key for both spending and viewing key paths
+  - keep this optional; default mode remains view-key-based encryption
+- [ ] Make MCP read receiver note preferences from ENS payment profile before composing requests:
+  - respect whether notes are preferred/required/optional/disabled
+  - enforce note constraints (`max bytes`, privacy/encryption expectations)
+  - expose clear user-facing behavior when recipient policy conflicts with sender input
 - [ ] Add ERC-681 output mode to `create-payment-link` and make it default for interoperability:
   - keep current custom HTTPS link format as optional app-specific wrapper
 - [ ] Publish machine-readable payment profile schema (JSON Schema) and use it for parser/tool validation.
