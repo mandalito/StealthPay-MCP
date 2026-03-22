@@ -48,17 +48,22 @@ Re-check command:
 
 Stablecoin symbol mapping in `STABLECOINS` is configured for:
 
-- `ethereum`, `base`, `optimism`, `arbitrum`, `polygon`, `gnosis`
+- `ethereum` (USDC, USDT, DAI)
+- `base` (USDC, DAI)
+- `optimism` (USDC, USDT, DAI)
+- `arbitrum` (USDC, USDT, DAI)
+- `polygon` (USDC, USDT, DAI)
+- `gnosis` (USDC, WXDAI)
+- `sepolia` (USDC, DAI, USDT)
 
 Not configured by symbol map:
 
-- `sepolia`
 - `hoodi`
 
 Notes:
 
-- `ETH` (native) and explicit ERC-20 contract addresses can still be used.
-- For hackathon demos, Sepolia with native ETH is the baseline.
+- `ETH` (native) and explicit ERC-20 contract addresses can still be used on any chain.
+- For hackathon demos, Sepolia with native ETH or testnet stablecoins is the baseline.
 
 ## Hoodi Decision (2026-03-21)
 

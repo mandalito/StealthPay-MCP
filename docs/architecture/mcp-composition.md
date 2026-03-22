@@ -7,16 +7,19 @@ StealthPay MCP currently runs as a self-contained server using direct RPC access
 ## Internal Components
 
 - ENS resolution + ENS registration helpers
+- payment profile schema (types, validation, ENS key mappings)
 - stealth address math/derivation
-- payment sender + ERC-5564 announcer calls
+- payment sender + ERC-5564 announcer calls + note encryption
 - announcement scanner
 - withdrawal helper
+- agent spend policy engine (caps, limits, allowlists, signed governance, audit logging)
 
-## Tool Groups
+## Tool Groups (12 tools)
 
-- onboarding: register ENS name and stealth keys
-- sender: resolve profile, generate address, send, create link
-- recipient: scan, derive stealth key, withdraw
+- identity: get-my-profile, generate-wallet, get-balances
+- onboarding & profile: register ENS name, register stealth keys, set profile
+- sender: resolve profile, generate address, send payment, create link
+- recipient: scan, claim
 
 ## Note
 

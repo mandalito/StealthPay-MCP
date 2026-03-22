@@ -21,9 +21,11 @@ StealthPay targets this double problem: smarter machine-readable payment routing
 
 StealthPay MCP turns an ENS name into a machine-usable payment endpoint:
 
-- reads recipient payment preferences from ENS-based profile data
-- builds the payment path for the right chain/token context
+- reads recipient payment preferences from CAIP-normalized ENS profile data (`stealthpay.v1.*` namespace)
+- builds the payment path for the right chain/token context with stealth/note policy enforcement
 - uses stealth-address flow (ERC-5564-style announcements) for private receipt discovery
+- encrypts payment notes using recipient viewing keys (ChaCha20-Poly1305)
+- enforces agent spend policy controls (per-tx caps, daily limits, chain/token/destination allowlists)
 
 ### What is MCP?
 
@@ -106,6 +108,17 @@ ENS_CHAIN=sepolia
 # RECIPIENT_SPENDING_PUBLIC_KEY=0x...
 # RECIPIENT_VIEWING_PRIVATE_KEY=0x...
 # RECIPIENT_VIEWING_PUBLIC_KEY=0x...
+
+# Optional: agent spend policy controls
+# POLICY_MAX_PER_TX=0.1                    # Per-transaction cap in ETH (default: 0.1)
+# POLICY_MAX_DAILY_SPEND=1.0               # Rolling 24h limit in ETH (default: 1.0)
+# POLICY_CHAIN_ALLOWLIST=sepolia,base       # Comma-separated; empty = all allowed
+# POLICY_TOKEN_ALLOWLIST=ETH,USDC           # Comma-separated; empty = all allowed
+# POLICY_DESTINATION_ALLOWLIST=alice.eth     # Comma-separated; empty = all allowed
+# POLICY_ADMIN_ADDRESS=0x...                # Admin key for signed policy updates
+# POLICY_IMMUTABLE=false                    # If true, blocks agent policy field changes via set-profile
+# POLICY_VERSION=0                          # Policy schema version (for rollback protection)
+# POLICY_EFFECTIVE_AT=2026-01-01T00:00:00Z  # ISO 8601 policy effective timestamp
 ```
 
 Recipient key handling:
@@ -141,12 +154,19 @@ StealthPay MCP follows one non-negotiable rule:
 - `scan-announcements` and `claim-stealth-payment` use env-only recipient key paths; key-bearing inputs are not part of tool schemas.
 - Derived stealth private keys are used server-side for claim execution and are never returned to agent/client output.
 - `derive-stealth-key` and `withdraw-from-stealth` are not registered MCP tools.
+- Agent spend policy engine (`src/lib/policy.ts`) enforces per-tx caps, daily limits, and allowlists on every transaction path.
+- `POLICY_IMMUTABLE=true` prevents agents from modifying policy fields via `set-profile`.
+- Signed policy updates require a pinned `POLICY_ADMIN_ADDRESS` with version monotonicity (rollback protection).
+- All policy events (load, check pass/fail, update accept/reject) are audit-logged to stderr.
+- A test (`test/tools/no-secrets-in-docs.test.ts`) scans docs/examples for private-key-like hex strings.
 
 ### Operational recommendations
 
 - Use dedicated low-fund operational wallets, not personal main wallets.
 - Do not run `DEBUG=true` test flows with real funds/keys.
 - Treat logs, chat history, shell history, and screenshots as sensitive channels.
+- Set `POLICY_MAX_PER_TX` and `POLICY_MAX_DAILY_SPEND` to appropriate limits for your use case.
+- Set `POLICY_IMMUTABLE=true` in production to prevent agents from modifying payment policies.
 
 ### Add to Claude Code
 
@@ -166,7 +186,7 @@ StealthPay MCP follows one non-negotiable rule:
 
 **Project-only** — add a `.mcp.json` in your project root with the same content.
 
-Then restart Claude Code. The 11 registered tools will be available immediately.
+Then restart Claude Code. The 12 registered tools will be available immediately.
 
 ## Tools
 
@@ -178,21 +198,22 @@ Then restart Claude Code. The 11 registered tools will be available immediately.
 | `generate-wallet` | Generate and persist a local sender wallet in `.env` |
 | `get-balances` | Check native/token balances of your sender wallet on a selected chain |
 
-### Onboarding
+### Onboarding & Profile
 
 | Tool | Description |
 |------|-------------|
 | `register-ens-name` | Register a .eth name (commit → wait → register flow, ~65s) |
 | `register-stealth-keys` | Generate spending/viewing keypairs and set the stealth-meta-address text record on your ENS name |
+| `set-profile` | Set payment preferences on your ENS name: preferred chain, token, stealth policy, and note preferences. Writes to both `stealthpay.v1.*` and legacy ENS text records. |
 
 ### Sending payments
 
 | Tool | Description |
 |------|-------------|
-| `get-payment-profile` | Resolve ENS name → address, avatar, preferred chain/token, stealth meta-address |
+| `get-payment-profile` | Resolve ENS name → address, avatar, CAIP-normalized chain/token preferences, stealth meta-address, stealth/note policies |
 | `generate-stealth-address` | Generate a one-time stealth address from an ENS name |
-| `send-stealth-payment` | Send ETH / stablecoins / ERC-20 to a stealth address + announce via ERC-5564 |
-| `create-payment-link` | Generate a shareable payment link |
+| `send-stealth-payment` | Send ETH / stablecoins / ERC-20 to a stealth address + announce via ERC-5564. Enforces recipient stealth/note policies and agent spend limits. Supports encrypted memos. |
+| `create-payment-link` | Generate a shareable payment link (web URL + ERC-681 URI) |
 
 ### Receiving payments
 
@@ -235,23 +256,36 @@ Live deployment check (via `eth_getCode`) on **2026-03-21** for configured singl
 - **Operational now**: `ethereum`, `base`, `optimism`, `arbitrum`, `polygon`, `gnosis`, `sepolia` (for stealth announcement/scan primitives).
 - **Not operational yet**: `hoodi` (contracts missing at configured singleton addresses).
 
-## Programmable payment profile (implementation status)
+## Programmable payment profile
 
-The proposed `stealthpay.v1.*` key namespace is not yet active in code.
+StealthPay implements CAIP-normalized payment profiles using the `stealthpay.v1.*` ENS text record namespace. The `set-profile` tool writes both namespaced v1 keys and legacy keys for backwards compatibility. The `get-payment-profile` tool reads v1 keys first, with legacy fallback.
 
-Current implementation reads legacy ENS text records:
+**Canonical keys (`stealthpay.v1.*`):**
 
-- `avatar`
-- `chain`
-- `token`
-- `stealth-meta-address`
-- `description`
+| Key | Type | Example |
+|-----|------|---------|
+| `stealthpay.v1.profile_version` | string | `"1"` |
+| `stealthpay.v1.preferred_chains` | CSV | `"eip155:8453,eip155:10"` (CAIP-2) |
+| `stealthpay.v1.preferred_assets` | CSV | `"eip155:8453/erc20:0x833..."` (CAIP-19) |
+| `stealthpay.v1.stealth_policy` | enum | `required \| preferred \| optional \| disabled` |
+| `stealthpay.v1.stealth_scheme_ids` | CSV | `"1"` |
+| `stealthpay.v1.note_policy` | enum | `required \| optional \| none` |
+| `stealthpay.v1.note_max_bytes` | number | `"140"` |
+| `stealthpay.v1.note_privacy` | enum | `plaintext \| encrypted \| hash_only` |
+
+**Legacy keys** (`avatar`, `chain`, `token`, `stealth-meta-address`, `description`) are still read as fallbacks and written alongside v1 keys during the migration window.
+
+A machine-readable JSON Schema is published at `schemas/payment-profile.schema.json`.
+
+### Announcement metadata format
 
 Stealth transfer announcement metadata (ERC-5564 event payload) is encoded as:
 
 - `viewTag` (1 byte)
+- `selector` (4 bytes, ERC-20 transfer selector or `0x00000000` for native)
 - `tokenAddress` (20 bytes, `0x00...00` for native ETH)
 - `amount` (32 bytes, uint256)
+- `memo` (variable bytes, UTF-8 plaintext, encrypted envelope, or keccak256 hash — per recipient `notePrivacy` preference)
 
 ## Testing
 
@@ -302,18 +336,22 @@ Notes:
 
 ```
 src/
-├── index.ts                 # MCP server entry point
-├── config.ts                # Chain configs, contract addresses, ABIs
+├── index.ts                 # MCP server entry point (12 registered tools)
+├── config.ts                # Chain configs, contract addresses, ABIs, CAIP helpers
 ├── lib/
 │   ├── stealth.ts           # ERC-5564 stealth address math (secp256k1)
-│   ├── ens.ts               # ENS resolution + stealth meta-address lookup
+│   ├── ens.ts               # ENS resolution + payment profile (dual-read v1/legacy)
 │   ├── ens-register.ts      # ENS name registration + text record setting
-│   ├── payments.ts          # Stablecoin transfer + ERC-5564 announcement
+│   ├── profile.ts           # Payment profile types, ENS key mappings, validation
+│   ├── payments.ts          # Token transfer + ERC-5564 announcement + note encryption
 │   ├── scanner.ts           # Scan Announcement events, discover payments
-│   └── withdraw.ts          # Withdraw funds from stealth addresses
+│   ├── withdraw.ts          # Withdraw funds from stealth addresses
+│   ├── policy.ts            # Agent spend policy engine (caps, limits, allowlists, audit)
+│   └── note-encryption.ts   # Encrypted notes (ChaCha20-Poly1305, baseline + dual-envelope)
 └── tools/                   # MCP tool wrappers (thin layer over lib/)
     ├── register-ens-name.ts
     ├── register-stealth-keys.ts
+    ├── set-profile.ts
     ├── get-payment-profile.ts
     ├── generate-stealth-address.ts
     ├── send-stealth-payment.ts
@@ -323,6 +361,8 @@ src/
     ├── get-balances.ts
     ├── scan-announcements.ts
     └── claim-stealth-payment.ts
+schemas/
+└── payment-profile.schema.json  # Machine-readable JSON Schema for payment profiles
 ```
 
 ## Local Helpers (`.local/`)
@@ -345,8 +385,9 @@ These scripts are not part of the production server and are not committed.
 | Package | Purpose |
 |---------|---------|
 | `@modelcontextprotocol/sdk` | MCP server |
-| `@noble/secp256k1` | Elliptic curve math |
-| `@noble/hashes` | Hashing (peer dep) |
+| `@noble/secp256k1` | Elliptic curve math (stealth addresses, ECDH) |
+| `@noble/hashes` | Hashing (HKDF-SHA256, keccak256 peer dep) |
+| `@noble/ciphers` | Symmetric encryption (ChaCha20-Poly1305 for encrypted notes) |
 | `viem` | ENS + transactions + keccak256 |
 | `zod` | Input validation |
 | `dotenv` | Environment variable loading |
@@ -354,16 +395,16 @@ These scripts are not part of the production server and are not committed.
 ## Known limitations
 
 - **Token-only stealth account cannot withdraw without native gas**: If a stealth account receives non-native tokens but has `0` native ETH, withdrawal fails until gas is funded. Gasless/paymaster is not in hackathon MVP scope.
-- **Sepolia stablecoin send path**: `send-stealth-payment` uses the `STABLECOINS` config map; unsupported token addresses require config updates before use.
 - **Hoodi testnet status**: Chain config exists, but production-grade ERC-5564/6538 readiness remains unvalidated for this repo.
 - **Metadata format compatibility**: Scanner parsing assumes this project's metadata conventions; other ERC-5564 senders may encode differently.
+- **In-memory spend ledger**: Daily spend tracking is in-process only and resets on server restart. Persistent storage is a future enhancement.
 
 ## Future improvements
 
 - Add ERC-4337/paymaster withdrawal flow so stealth accounts can move token-only balances without pre-funding native gas.
-- Add policy-based spend/risk controls for agent-initiated actions (per-tx caps, daily limits, token/chain allowlists, destination allowlists), either through Account Abstraction controls or directly in MCP.
 - Add `send-stealth-payment` mode for unsigned payload generation (`build_unsigned_tx`) in addition to direct execution.
 - Improve scan performance/reliability with indexed backends (subgraph/indexer) and rate-limit-aware pagination.
+- Persist spend ledger to disk or external store for daily limit continuity across restarts.
 - Complete Umbra SDK integration path where it improves maintainability without breaking current ERC-5564/6538 behavior.
 
 ## License

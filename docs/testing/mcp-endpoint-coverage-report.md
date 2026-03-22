@@ -1,6 +1,6 @@
 # MCP Endpoint Coverage Report
 
-Generated: 2026-03-21T17:57:24+01:00
+Generated: 2026-03-22T08:30:00+01:00
 Branch: main
 
 ## Scope
@@ -14,18 +14,17 @@ Audit of test alignment between currently registered MCP tools and `test/` suite
 3. `get-balances`
 4. `register-ens-name`
 5. `register-stealth-keys`
-6. `get-payment-profile`
-7. `generate-stealth-address`
-8. `send-stealth-payment`
-9. `create-payment-link`
-10. `scan-announcements`
-11. `claim-stealth-payment`
+6. `set-profile`
+7. `get-payment-profile`
+8. `generate-stealth-address`
+9. `send-stealth-payment`
+10. `create-payment-link`
+11. `scan-announcements`
+12. `claim-stealth-payment`
 
-## Alignment Status
+## Deterministic MCP Endpoint Test Files
 
-Before this pass, coverage was mostly at lib/E2E level (`stealth.test.ts`, `payments.test.ts`, integration scripts) and did not systematically validate MCP tool handlers.
-
-Current deterministic MCP endpoint test files:
+### Tool handler tests (`test/tools/`)
 
 - `test/tools/get-my-profile.test.ts`
 - `test/tools/generate-wallet.test.ts`
@@ -38,15 +37,24 @@ Current deterministic MCP endpoint test files:
 - `test/tools/create-payment-link.test.ts`
 - `test/tools/scan-announcements.test.ts`
 - `test/tools/claim-stealth-payment.test.ts`
-- `test/tools/registered-tools.test.ts` (ensures only allowed endpoints are registered and key-bearing legacy tools stay unregistered)
 
-## Regression Coverage Added
+### Cross-cutting test files
 
-A dedicated regression test guards ENS registration receipt handling:
+- `test/tools/registered-tools.test.ts` — ensures exactly the 12 allowed tools are registered and key-bearing legacy tools stay unregistered
+- `test/tools/policy.test.ts` — agent spend policy engine (per-tx caps, daily limits, chain/token/destination allowlists, signed updates, audit logging)
+- `test/tools/no-secrets-in-docs.test.ts` — scans docs/ and examples/ for private-key-like hex strings
+- `test/tools/profile-schema-validation.test.ts` — validates JSON Schema matches TypeScript types and PROFILE_DEFAULTS
+- `test/tools/profile-migration.test.ts` — canonical key precedence over legacy, CAIP validation, policy enum validation, dual-write consistency
 
-- `test/ens-register.receipt.test.ts`
+### Library-level tests
 
-This checks that `registerEnsName` throws when commit/register receipts are reverted, preventing false “success” responses.
+- `test/stealth.test.ts` — stealth address math
+- `test/payments.test.ts` — payment links, ERC-681 URIs
+- `test/note-encryption.test.ts` — encrypted notes (baseline + dual-envelope mode, round-trip encrypt/decrypt)
+
+### Regression Coverage
+
+- `test/ens-register.receipt.test.ts` — ENS registration receipt handling
 
 ## Current Test Commands
 

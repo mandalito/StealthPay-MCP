@@ -16,7 +16,9 @@ are executable scenario scripts, not Vitest unit test files.
 
 - deterministic automated tests run by Vitest
 - include unit tests and MCP tool-contract tests
-- include a tool-surface guard (`test/tools/registered-tools.test.ts`) to ensure only allowed MCP endpoints are registered
+- include a tool-surface guard (`test/tools/registered-tools.test.ts`) to ensure only the 12 allowed MCP endpoints are registered
+- include cross-cutting tests: policy engine, profile migration, schema validation, secrets-in-docs lint
+- include library tests: stealth math, payment links, note encryption
 - suitable for default CI/local regression checks
 
 ### `*-e2e.ts` files

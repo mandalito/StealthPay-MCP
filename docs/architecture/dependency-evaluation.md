@@ -45,6 +45,18 @@ Decision:
 - **Do not replace StealthPay core with Umbra SDK for MVP**
 - reuse architectural ideas as future enhancements (batch flows, indexing/scanning acceleration, relayer UX)
 
+## Current Dependency Stack
+
+| Package | Purpose |
+|---------|---------|
+| `@modelcontextprotocol/sdk` | MCP server framework |
+| `@noble/secp256k1` | Elliptic curve math (stealth addresses, ECDH) |
+| `@noble/hashes` | Hashing (HKDF-SHA256 for key derivation, keccak256 peer dep) |
+| `@noble/ciphers` | Symmetric encryption (ChaCha20-Poly1305 for encrypted notes) |
+| `viem` | ENS resolution, transactions, contract calls, keccak256 |
+| `zod` | Input schema validation |
+| `dotenv` | Environment variable loading |
+
 ## MVP Guidance
 
 For the hackathon:

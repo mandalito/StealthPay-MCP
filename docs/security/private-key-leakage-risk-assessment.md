@@ -43,6 +43,11 @@ Validation run:
 - `derive-stealth-key` and `withdraw-from-stealth` tool wrapper files deleted from repository.
 - Regression test (`test/tools/registered-tools.test.ts`) asserts forbidden tools are never registered.
 - E2E test key output gated behind `DEBUG=true`.
+- Agent spend policy engine (`src/lib/policy.ts`) enforces per-tx caps, daily limits, and allowlists on every transaction path.
+- `POLICY_IMMUTABLE=true` prevents agents from modifying policy fields via `set-profile`.
+- Signed policy updates require a pinned `POLICY_ADMIN_ADDRESS` with version monotonicity.
+- All policy events are audit-logged to stderr.
+- `test/tools/no-secrets-in-docs.test.ts` scans docs/ for private-key-like hex strings.
 
 ## Remaining Tools That Handle Secrets (Server-Side Only)
 
@@ -51,6 +56,7 @@ Validation run:
 | `send-stealth-payment` | `SENDER_PRIVATE_KEY` | Read from env, signs tx internally |
 | `register-ens-name` | `SENDER_PRIVATE_KEY` | Read from env, signs tx internally |
 | `register-stealth-keys` | `SENDER_PRIVATE_KEY` + generates keys | Read from env, saves to env, never returned |
+| `set-profile` | `SENDER_PRIVATE_KEY` | Read from env, signs ENS resolver tx internally |
 | `scan-announcements` | `RECIPIENT_VIEWING_PRIVATE_KEY` | Read from env only |
 | `claim-stealth-payment` | `RECIPIENT_SPENDING/VIEWING_PRIVATE_KEY` | Read from env, derives + withdraws internally |
 
@@ -59,3 +65,4 @@ All secrets stay within the Node.js process boundary.
 ## Residual Risks / Follow-up
 
 1. Debug mode (`DEBUG=true`) intentionally prints keys in `test/register-e2e.ts`; this is acceptable for local troubleshooting only and must never be used with real funds.
+2. In-memory spend ledger resets on server restart — daily spend tracking is not persistent across restarts.
