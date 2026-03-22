@@ -193,16 +193,30 @@ export const ERC20_ABI = [
 export const ENS_CONTRACTS: Record<string, {
   controller: `0x${string}`;
   resolver: `0x${string}`;
+  reverseRegistrar?: `0x${string}`;
 }> = {
   sepolia: {
     controller: '0xfb3cE5D01e0f33f41DbB39035dB9745962F1f968',
     resolver: '0xE99638b40E4Fff0129D56f03b55b6bbC4BBE49b5',
+    reverseRegistrar: '0xA0a1AbcDAe1a2a4A2EF8e9113Ff0e02DD81DC0C6',
   },
   ethereum: {
     controller: '0x253553366Da8546fC250F225fe3d25d0C782303b',
     resolver: '0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63',
+    reverseRegistrar: '0xa58E81fe9b61B5c3fE2AFD33CF304c454AbFc7Cb',
   },
 };
+
+// ENS Reverse Registrar ABI
+export const ENS_REVERSE_REGISTRAR_ABI = [
+  {
+    name: 'setName',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'name', type: 'string' }],
+    outputs: [{ name: '', type: 'bytes32' }],
+  },
+] as const;
 
 // ENS Registrar Controller ABI (struct-based, ENS V3)
 export const ENS_CONTROLLER_ABI = [

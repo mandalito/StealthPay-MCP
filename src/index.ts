@@ -13,6 +13,7 @@ import { registerClaimStealthPayment } from './tools/claim-stealth-payment.js';
 import { registerGenerateWallet } from './tools/generate-wallet.js';
 import { registerGetBalances } from './tools/get-balances.js';
 import { registerSetProfile } from './tools/set-profile.js';
+import { registerSetPrimaryName } from './tools/set-primary-name.js';
 
 // Load .env from DOTENV_PATH if set, otherwise default location
 config({ path: process.env.DOTENV_PATH });
@@ -31,6 +32,7 @@ registerGetBalances(server);
 registerRegisterEnsName(server);
 registerRegisterStealthKeys(server);
 registerSetProfile(server);
+registerSetPrimaryName(server);
 
 // Register all tools — sender side
 registerGetPaymentProfile(server);
