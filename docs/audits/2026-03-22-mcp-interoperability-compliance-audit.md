@@ -14,6 +14,8 @@ The main interoperability blockers are:
 3. **Chain-aware registry interoperability gaps** (lookup tied to ENS chain context).
 4. **Custom payment link format** instead of ERC-681.
 
+This update assumes an in-development context where **backward compatibility is not required**.
+
 ## Method
 
 - Static review of implementation:
@@ -134,36 +136,37 @@ The main interoperability blockers are:
 - Stealth math flow aligns with scheme-1 generation/check/derive model (`src/lib/stealth.ts`).
 - Recipient key material stays server-side for scan/claim flows, reducing leakage risk through MCP tool IO (`src/tools/scan-announcements.ts`, `src/tools/claim-stealth-payment.ts`).
 
-## Recommended Remediation Plan (Interoperability-First)
+## Recommended Remediation Plan (Interoperability-First, No Backward Compatibility)
 
-1. **Add dual metadata codec (`v1` current + `erc5564-selector`)**
-   - Encode selector-aware metadata by default for ERC-20/native.
-   - Keep parser backward compatible for existing historical announcements.
+1. **Replace current metadata codec with strict ERC-5564 selector-aware encoding**
+   - Use a single canonical metadata layout aligned with ERC-5564 guidance.
+   - Remove project-specific legacy decode assumptions from scanner paths.
 
-2. **Add ERC-6538 write support**
-   - Extend `register-stealth-keys` with optional registry write (direct and/or on-behalf mode).
-   - Keep ENS text write as compatibility channel, not sole channel.
+2. **Promote ERC-6538 write path to first-class behavior**
+   - Extend `register-stealth-keys` to write to registry (`registerKeys` and/or `registerKeysOnBehalf` workflows).
+   - Treat ENS text record as optional mirror metadata, not the canonical source.
 
-3. **Make registry lookup chain-aware**
-   - Resolve registry on payment chain context (or probe configured chains) instead of only `ENS_CHAIN`.
+3. **Use payment-chain context as source of truth for registry lookup**
+   - Resolve registry on the active transaction/payment chain.
+   - Remove lookup behavior that depends only on `ENS_CHAIN`.
 
-4. **Normalize stealth meta-address prefix strategy**
-   - Validate incoming `st:<shortName>:` optionally against target chain.
-   - Stop hardcoding `st:eth:` where chain-specific metadata is intended.
+4. **Enforce strict stealth meta-address prefix semantics**
+   - Validate `st:<shortName>:` against target chain short name rules.
+   - Stop generating hardcoded `st:eth:` values.
 
-5. **Add typed MCP outputs for core tools**
-   - Add `outputSchema` + `structuredContent` for:
+5. **Move core MCP tools to typed outputs now**
+   - Add `outputSchema` + `structuredContent` as the primary contract for:
      - `get-payment-profile`
      - `generate-stealth-address`
      - `scan-announcements`
      - `send-stealth-payment`
      - `claim-stealth-payment`
 
-6. **Optional: provide ERC-681 output mode in `create-payment-link`**
-   - Keep current custom link for web UX.
-   - Add standards mode for wallet interoperability.
+6. **Align payment request links to ERC-681**
+   - Replace proprietary link generation with `ethereum:` URI output for interoperable wallet handling.
+   - Keep custom web URL format only if it is explicitly outside the interoperability-critical path.
 
 ## Conclusion
 
 Current implementation is a strong **functional stealth-payment MVP** with solid core cryptographic alignment.  
-To achieve the interoperability goal, priority should go to **ERC-5564 metadata compatibility** and **ERC-6538 write-path support**, then typed MCP outputs for machine clients.
+To achieve the interoperability goal, priority should go to **strict ERC-5564 metadata conformance** and **ERC-6538 write-path support**, then typed MCP outputs for machine clients.
