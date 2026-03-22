@@ -24,6 +24,18 @@ export const SUPPORTED_CHAINS: Record<string, Chain> = {
 // Default chain for operations
 export const DEFAULT_CHAIN = 'sepolia';
 
+// ERC-3770 chain short names for stealth meta-address prefix (st:<shortName>:...)
+export const CHAIN_SHORT_NAMES: Record<string, string> = {
+  ethereum: 'eth',
+  base: 'base',
+  optimism: 'oeth',
+  arbitrum: 'arb1',
+  polygon: 'matic',
+  gnosis: 'gno',
+  sepolia: 'sep',
+  hoodi: 'hoodi',
+};
+
 /**
  * Get block explorer URL for a transaction or address.
  */
@@ -213,7 +225,7 @@ export const ENS_RESOLVER_ABI = [
   },
 ] as const;
 
-// ERC-6538 Registry ABI (minimal — just what we need for lookups)
+// ERC-6538 Registry ABI (read + write)
 export const ERC6538_REGISTRY_ABI = [
   {
     inputs: [
@@ -223,6 +235,16 @@ export const ERC6538_REGISTRY_ABI = [
     name: 'stealthMetaAddressOf',
     outputs: [{ internalType: 'bytes', name: '', type: 'bytes' }],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'schemeId', type: 'uint256' },
+      { internalType: 'bytes', name: 'stealthMetaAddress', type: 'bytes' },
+    ],
+    name: 'registerKeys',
+    outputs: [],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
 ] as const;

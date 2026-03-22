@@ -17,7 +17,10 @@ describe('tool:create-payment-link', () => {
   });
 
   it('returns link content on success', async () => {
-    createPaymentLinkMock.mockReturnValue('https://stealthpay.link/pay?to=alice.eth');
+    createPaymentLinkMock.mockReturnValue({
+      webUrl: 'https://stealthpay.link/pay?to=alice.eth',
+      erc681Uri: 'ethereum:alice.eth@8453',
+    });
     const { handler } = registerAndGetTool(registerCreatePaymentLink, 'create-payment-link');
 
     const result = await handler({ to: 'alice.eth', amount: '5', token: 'USDC', chain: 'base' });
@@ -32,6 +35,7 @@ describe('tool:create-payment-link', () => {
     });
     expect(result.content[0].text).toContain('https://stealthpay.link/pay?to=alice.eth');
     expect(result.content[0].text).toContain('Recipient: alice.eth');
+    expect(result.content[0].text).toContain('ERC-681 URI: ethereum:alice.eth@8453');
   });
 
   it('returns tool error when payment link creation throws', async () => {

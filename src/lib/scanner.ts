@@ -119,7 +119,7 @@ export async function scanAnnouncements(params: ScanParams): Promise<StealthPaym
 
       if (!isOurs) continue;
 
-      // Decode metadata: viewTag (1 byte) + tokenAddress (20 bytes) + amount (32 bytes)
+      // Decode metadata: viewTag (1) + selector (4) + tokenAddress (20) + amount (32)
       const { token, amount } = decodeMetadata(metadata);
 
       results.push({
@@ -139,7 +139,7 @@ export async function scanAnnouncements(params: ScanParams): Promise<StealthPaym
 
 /**
  * Decode announcement metadata.
- * Expected format: viewTag (1 byte) + tokenAddress (20 bytes) + amount (32 bytes) = 53 bytes
+ * ERC-5564 format: viewTag (1 byte) + selector (4 bytes) + tokenAddress (20 bytes) + amount (32 bytes) = 57 bytes
  * Gracefully handles unexpected formats.
  */
 function decodeMetadata(metadata: `0x${string}`): {
@@ -148,13 +148,17 @@ function decodeMetadata(metadata: `0x${string}`): {
 } {
   const clean = metadata.slice(2); // remove 0x
 
-  // Expected: 1 + 20 + 32 = 53 bytes = 106 hex chars
-  if (clean.length < 106) {
+  // ERC-5564 layout: 1 + 4 + 20 + 32 = 57 bytes = 114 hex chars
+  if (clean.length < 114) {
     return { token: null, amount: null };
   }
 
-  const token = `0x${clean.slice(2, 42)}` as `0x${string}`; // bytes 1-20
-  const amount = BigInt(`0x${clean.slice(42, 106)}`);         // bytes 21-52
+  // viewTag: [0, 2)   = 1 byte
+  // selector: [2, 10) = 4 bytes
+  // token: [10, 50)   = 20 bytes
+  // amount: [50, 114) = 32 bytes
+  const token = `0x${clean.slice(10, 50)}` as `0x${string}`;
+  const amount = BigInt(`0x${clean.slice(50, 114)}`);
 
   return { token, amount };
 }

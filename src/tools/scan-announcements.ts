@@ -4,6 +4,19 @@ import { formatUnits } from 'viem';
 import { scanAnnouncements } from '../lib/scanner.js';
 import { DEFAULT_CHAIN, SUPPORTED_CHAINS, explorerTxUrl } from '../config.js';
 
+const scanOutputSchema = z.object({
+  chain: z.string(),
+  count: z.number(),
+  payments: z.array(z.object({
+    stealthAddress: z.string(),
+    ephemeralPublicKey: z.string(),
+    token: z.string().nullable(),
+    amount: z.string().nullable(),
+    blockNumber: z.string(),
+    txHash: z.string(),
+  })),
+});
+
 export function registerScanAnnouncements(server: McpServer) {
   server.registerTool(
     'scan-announcements',
@@ -25,6 +38,7 @@ export function registerScanAnnouncements(server: McpServer) {
           .optional()
           .describe('End block number (defaults to latest)'),
       }),
+      outputSchema: scanOutputSchema,
     },
     async ({ chain, fromBlock, toBlock }) => {
       try {
@@ -51,8 +65,22 @@ export function registerScanAnnouncements(server: McpServer) {
           toBlock: toBlock ? BigInt(toBlock) : undefined,
         });
 
+        const structured = {
+          chain,
+          count: payments.length,
+          payments: payments.map(p => ({
+            stealthAddress: p.stealthAddress,
+            ephemeralPublicKey: p.ephemeralPublicKey,
+            token: p.token,
+            amount: p.amount !== null ? p.amount.toString() : null,
+            blockNumber: p.blockNumber.toString(),
+            txHash: p.txHash,
+          })),
+        };
+
         if (payments.length === 0) {
           return {
+            structuredContent: structured,
             content: [
               {
                 type: 'text' as const,
@@ -84,6 +112,7 @@ export function registerScanAnnouncements(server: McpServer) {
         }
 
         return {
+          structuredContent: structured,
           content: [{ type: 'text' as const, text: lines.join('\n') }],
         };
       } catch (error) {

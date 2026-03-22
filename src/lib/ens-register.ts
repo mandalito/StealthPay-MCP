@@ -11,6 +11,10 @@ import {
   ENS_CONTRACTS,
   ENS_CONTROLLER_ABI,
   ENS_RESOLVER_ABI,
+  ERC6538_REGISTRY,
+  ERC6538_REGISTRY_ABI,
+  SCHEME_ID,
+  CHAIN_SHORT_NAMES,
 } from '../config.js';
 
 // ── ENS Name Registration ──────────────────────────────────────────────────
@@ -174,6 +178,7 @@ export async function registerEnsName(
 export interface RegisterStealthKeysResult {
   name: string;
   txHash: `0x${string}`;
+  registryTxHash: `0x${string}` | null;
   stealthMetaAddress: string;
   spendingPrivateKey: `0x${string}`;
   spendingPublicKey: `0x${string}`;
@@ -230,12 +235,13 @@ export async function registerStealthKeys(params: {
     keysReused = false;
   }
 
+  const shortName = CHAIN_SHORT_NAMES[chainName] ?? 'eth';
   const stealthMetaAddress =
-    'st:eth:0x' +
+    `st:${shortName}:0x` +
     bytesToHex(spendingPub).slice(2) +
     bytesToHex(viewingPub).slice(2);
 
-  // Set the text record on the resolver
+  // Set the text record on the resolver (ENS mirror)
   const node = namehash(params.name);
 
   const txHash = await walletClient.writeContract({
@@ -251,9 +257,32 @@ export async function registerStealthKeys(params: {
     pollingInterval: 3_000,
   });
 
+  // Register keys on ERC-6538 registry (canonical source)
+  // The registry stores raw bytes: spending_pub (33) + viewing_pub (33) = 66 bytes
+  const stealthMetaAddressBytes = `0x${bytesToHex(spendingPub).slice(2)}${bytesToHex(viewingPub).slice(2)}` as `0x${string}`;
+  let registryTxHash: `0x${string}` | null = null;
+  try {
+    registryTxHash = await walletClient.writeContract({
+      address: ERC6538_REGISTRY,
+      abi: ERC6538_REGISTRY_ABI,
+      functionName: 'registerKeys',
+      args: [SCHEME_ID, stealthMetaAddressBytes],
+    });
+
+    await publicClient.waitForTransactionReceipt({
+      hash: registryTxHash,
+      timeout: 120_000,
+      pollingInterval: 3_000,
+    });
+  } catch {
+    // Registry write is best-effort — may not be deployed on all chains
+    registryTxHash = null;
+  }
+
   return {
     name: params.name,
     txHash,
+    registryTxHash,
     stealthMetaAddress,
     spendingPrivateKey: bytesToHex(spendingPriv) as `0x${string}`,
     spendingPublicKey: bytesToHex(spendingPub) as `0x${string}`,

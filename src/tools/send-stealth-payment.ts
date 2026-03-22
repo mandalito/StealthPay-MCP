@@ -5,6 +5,17 @@ import { generateStealthAddress } from '../lib/stealth.js';
 import { sendToStealth } from '../lib/payments.js';
 import { SUPPORTED_CHAINS, DEFAULT_CHAIN, explorerTxUrl } from '../config.js';
 
+const sendOutputSchema = z.object({
+  recipient: z.string(),
+  amount: z.string(),
+  token: z.string(),
+  chain: z.string(),
+  stealthAddress: z.string(),
+  transferTxHash: z.string(),
+  announceTxHash: z.string().nullable(),
+  announceFailed: z.boolean(),
+});
+
 export function registerSendStealthPayment(server: McpServer) {
   server.registerTool(
     'send-stealth-payment',
@@ -24,6 +35,7 @@ export function registerSendStealthPayment(server: McpServer) {
           .optional()
           .describe(`Chain to send on. If omitted, uses the recipient's preferred chain or defaults to ${DEFAULT_CHAIN}. Supported: ${Object.keys(SUPPORTED_CHAINS).join(', ')}`),
       }),
+      outputSchema: sendOutputSchema,
     },
     async ({ to, amount, token, chain }) => {
       try {
@@ -101,6 +113,16 @@ export function registerSendStealthPayment(server: McpServer) {
         );
 
         return {
+          structuredContent: {
+            recipient: to,
+            amount,
+            token: tokenLabel,
+            chain: resolvedChain,
+            stealthAddress: stealth.stealthAddress,
+            transferTxHash,
+            announceTxHash,
+            announceFailed: !!announceFailed,
+          },
           content: [{ type: 'text' as const, text: lines.join('\n') }],
         };
       } catch (error) {

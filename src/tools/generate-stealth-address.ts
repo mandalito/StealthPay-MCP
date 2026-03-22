@@ -3,6 +3,13 @@ import { z } from 'zod';
 import { getStealthMetaAddress } from '../lib/ens.js';
 import { generateStealthAddress } from '../lib/stealth.js';
 
+const stealthAddressOutputSchema = z.object({
+  stealthAddress: z.string(),
+  ephemeralPublicKey: z.string(),
+  viewTag: z.string(),
+  recipient: z.string(),
+});
+
 export function registerGenerateStealthAddress(server: McpServer) {
   server.registerTool(
     'generate-stealth-address',
@@ -13,6 +20,7 @@ export function registerGenerateStealthAddress(server: McpServer) {
       inputSchema: z.object({
         name: z.string().describe('ENS name of the recipient (e.g. "vitalik.eth")'),
       }),
+      outputSchema: stealthAddressOutputSchema,
     },
     async ({ name }) => {
       try {
@@ -34,6 +42,12 @@ export function registerGenerateStealthAddress(server: McpServer) {
         const result = generateStealthAddress(metaAddress);
 
         return {
+          structuredContent: {
+            stealthAddress: result.stealthAddress,
+            ephemeralPublicKey: result.ephemeralPublicKey,
+            viewTag: result.viewTag,
+            recipient: name,
+          },
           content: [
             {
               type: 'text' as const,

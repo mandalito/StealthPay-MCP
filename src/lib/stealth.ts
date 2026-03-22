@@ -165,7 +165,10 @@ export function deriveStealthPrivateKey(params: {
 function parseStealthMetaAddress(metaAddress: string): {
   spendingPubKey: Uint8Array;
   viewingPubKey: Uint8Array;
+  chainPrefix: string | null;
 } {
+  let chainPrefix: string | null = null;
+
   // Strip URI prefix if present (e.g., "st:eth:0x...")
   let hex = metaAddress;
   if (hex.startsWith('st:')) {
@@ -175,6 +178,7 @@ function parseStealthMetaAddress(metaAddress: string): {
         `Invalid stealth meta-address URI: expected "st:<chain>:0x<keys>", got "${metaAddress}"`
       );
     }
+    chainPrefix = parts[1];
     hex = parts[2];
   }
 
@@ -184,13 +188,13 @@ function parseStealthMetaAddress(metaAddress: string): {
   // Each compressed public key is 33 bytes = 66 hex chars
   if (clean.length === 66) {
     const key = Point.fromHex(clean).toBytes(true);
-    return { spendingPubKey: key, viewingPubKey: key };
+    return { spendingPubKey: key, viewingPubKey: key, chainPrefix };
   }
 
   if (clean.length === 132) {
     const spendingPubKey = Point.fromHex(clean.slice(0, 66)).toBytes(true);
     const viewingPubKey = Point.fromHex(clean.slice(66)).toBytes(true);
-    return { spendingPubKey, viewingPubKey };
+    return { spendingPubKey, viewingPubKey, chainPrefix };
   }
 
   throw new Error(

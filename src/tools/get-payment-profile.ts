@@ -2,6 +2,17 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { getPaymentProfile } from '../lib/ens.js';
 
+const paymentProfileOutputSchema = z.object({
+  ensName: z.string(),
+  address: z.string().nullable(),
+  avatar: z.string().nullable(),
+  preferredChain: z.string().nullable(),
+  preferredToken: z.string().nullable(),
+  stealthMetaAddress: z.string().nullable(),
+  description: z.string().nullable(),
+  stealthSupported: z.boolean(),
+});
+
 export function registerGetPaymentProfile(server: McpServer) {
   server.registerTool(
     'get-payment-profile',
@@ -12,6 +23,7 @@ export function registerGetPaymentProfile(server: McpServer) {
       inputSchema: z.object({
         name: z.string().describe('ENS name (e.g. "vitalik.eth")'),
       }),
+      outputSchema: paymentProfileOutputSchema,
     },
     async ({ name }) => {
       try {
@@ -55,6 +67,16 @@ export function registerGetPaymentProfile(server: McpServer) {
         }
 
         return {
+          structuredContent: {
+            ensName: profile.ensName,
+            address: profile.address,
+            avatar: profile.avatar,
+            preferredChain: profile.preferredChain,
+            preferredToken: profile.preferredToken,
+            stealthMetaAddress: profile.stealthMetaAddress,
+            description: profile.description,
+            stealthSupported: !!profile.stealthMetaAddress,
+          },
           content: [{ type: 'text' as const, text: lines.join('\n') }],
         };
       } catch (error) {

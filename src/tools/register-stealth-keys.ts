@@ -43,9 +43,14 @@ export function registerRegisterStealthKeys(server: McpServer) {
         const lines = [
           `Stealth keys registered for **${result.name}**`,
           '',
-          `Tx: ${explorerTxUrl(chain, result.txHash)}`,
-          `Stealth meta-address: \`${result.stealthMetaAddress}\``,
+          `ENS text record tx: ${explorerTxUrl(chain, result.txHash)}`,
         ];
+        if (result.registryTxHash) {
+          lines.push(`ERC-6538 registry tx: ${explorerTxUrl(chain, result.registryTxHash)}`);
+        } else {
+          lines.push(`ERC-6538 registry: skipped (contract may not be deployed on ${chain})`);
+        }
+        lines.push(`Stealth meta-address: \`${result.stealthMetaAddress}\``);
 
         if (result.keysReused) {
           // Same keys as before — no need to update .env

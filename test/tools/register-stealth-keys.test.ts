@@ -57,7 +57,8 @@ describe('tool:register-stealth-keys', () => {
     registerStealthKeysMock.mockResolvedValue({
       name: 'alice.eth',
       txHash: '0xtx',
-      stealthMetaAddress: 'st:eth:0xabc',
+      registryTxHash: '0xregistry',
+      stealthMetaAddress: 'st:sep:0xabc',
       spendingPrivateKey: '0x' + '3'.repeat(64),
       spendingPublicKey: '0x02' + '4'.repeat(64),
       viewingPrivateKey: '0x' + '5'.repeat(64),

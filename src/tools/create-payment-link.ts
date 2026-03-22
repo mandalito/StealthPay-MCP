@@ -19,15 +19,17 @@ export function registerCreatePaymentLink(server: McpServer) {
     },
     async ({ to, amount, token, chain, memo }) => {
       try {
-        const link = createPaymentLink({ to, amount, token, chain, memo });
+        const { webUrl, erc681Uri } = createPaymentLink({ to, amount, token, chain, memo });
 
         const lines = [
           `**Payment link created**`,
           ``,
-          `Link: ${link}`,
-          ``,
-          `Recipient: ${to}`,
+          `Link: ${webUrl}`,
         ];
+        if (erc681Uri) {
+          lines.push(`ERC-681 URI: ${erc681Uri}`);
+        }
+        lines.push(``, `Recipient: ${to}`);
         if (amount) lines.push(`Amount: ${amount}${token ? ` ${token}` : ''}`);
         if (chain) lines.push(`Chain: ${chain}`);
         if (memo) lines.push(`Memo: ${memo}`);

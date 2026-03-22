@@ -4,6 +4,15 @@ import { deriveStealthPrivateKey } from '../lib/stealth.js';
 import { withdrawFromStealth } from '../lib/withdraw.js';
 import { DEFAULT_CHAIN, SUPPORTED_CHAINS, explorerTxUrl } from '../config.js';
 
+const claimOutputSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  amount: z.string(),
+  token: z.string(),
+  txHash: z.string(),
+  chain: z.string(),
+});
+
 export function registerClaimStealthPayment(server: McpServer) {
   server.registerTool(
     'claim-stealth-payment',
@@ -30,6 +39,7 @@ export function registerClaimStealthPayment(server: McpServer) {
           .default(DEFAULT_CHAIN)
           .describe(`Chain (default: ${DEFAULT_CHAIN}). Supported: ${Object.keys(SUPPORTED_CHAINS).join(', ')}`),
       }),
+      outputSchema: claimOutputSchema,
     },
     async ({ ephemeralPublicKey, to, token, amount, chain }) => {
       try {
@@ -65,6 +75,14 @@ export function registerClaimStealthPayment(server: McpServer) {
         });
 
         return {
+          structuredContent: {
+            from: result.from,
+            to: result.to,
+            amount: result.amount,
+            token: result.token,
+            txHash: result.txHash,
+            chain,
+          },
           content: [
             {
               type: 'text' as const,

@@ -1,7 +1,7 @@
 import { createPublicClient, http, type PublicClient } from 'viem';
 import { mainnet } from 'viem/chains';
 import { normalize } from 'viem/ens';
-import { ERC6538_REGISTRY, ERC6538_REGISTRY_ABI, SCHEME_ID, SUPPORTED_CHAINS } from '../config.js';
+import { ERC6538_REGISTRY, ERC6538_REGISTRY_ABI, SCHEME_ID, SUPPORTED_CHAINS, DEFAULT_CHAIN } from '../config.js';
 
 // ENS resolution defaults to mainnet but can be overridden via ENS_CHAIN env var
 // (e.g. ENS_CHAIN=sepolia for testnet ENS names)
@@ -89,13 +89,29 @@ export async function getStealthMetaAddress(name: string): Promise<string | null
 }
 
 /**
+ * Get a public client for the payment chain (distinct from the ENS client).
+ * Uses CHAIN env var (or DEFAULT_CHAIN) to resolve the registry on the
+ * chain where payments will be sent, not the ENS lookup chain.
+ */
+function getPaymentChainClient(): PublicClient {
+  const chainName = process.env.CHAIN ?? DEFAULT_CHAIN;
+  const chain = SUPPORTED_CHAINS[chainName] ?? mainnet;
+  return createPublicClient({
+    chain,
+    transport: http(process.env.RPC_URL),
+  });
+}
+
+/**
  * Query the ERC-6538 registry contract for a stealth meta-address.
+ * Uses the payment chain client (not ENS chain) for registry lookups.
  */
 async function getStealthMetaAddressFromRegistry(
   address: `0x${string}`
 ): Promise<string | null> {
   try {
-    const result = await getEnsClient().readContract({
+    const client = getPaymentChainClient();
+    const result = await client.readContract({
       address: ERC6538_REGISTRY,
       abi: ERC6538_REGISTRY_ABI,
       functionName: 'stealthMetaAddressOf',
