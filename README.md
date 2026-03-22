@@ -115,18 +115,38 @@ Recipient key handling:
 - Only the stealth meta-address is written on-chain; private keys are never stored on-chain.
 - `.env` is gitignored, so these secrets stay local unless you export them elsewhere.
 
-### Security best practices (important)
+## Security Model
 
-To minimize private-key exposure risk:
+StealthPay MCP follows one non-negotiable rule:
+**private keys must never be exposed to the agent model under any circumstances.**
 
-1. Never paste private keys in chat, prompts, or MCP tool arguments.
-2. Keep all secrets in local `.env` only (`SENDER_PRIVATE_KEY`, `RECIPIENT_*_PRIVATE_KEY`).
-3. Use only env-based recipient flows:
-   - `scan-announcements` (env keys)
-   - `claim-stealth-payment` (derive + withdraw server-side)
-4. Do not use `DEBUG=true` in `test/register-e2e.ts` with real wallets/funds.
-5. Use dedicated low-fund hackathon wallets, not personal main wallets.
-6. If any key appears in logs/chat/history, rotate that key immediately.
+### Key philosophy
+
+- Agents can trigger MCP tools, but they must not receive private key material in tool inputs or outputs.
+- This includes sender account keys, recipient spending/viewing keys, and derived stealth private keys.
+- Secret material should remain inside the MCP runtime boundary only.
+
+### Operator responsibilities (install/deploy)
+
+- Store keys in a secure local haven on your device (OS keychain, encrypted secret store, or equivalent).
+- Ensure the secret store is reachable by MCP runtime but not directly reachable by the agent process.
+- Never paste keys into chat, prompts, or tool arguments.
+- Prefer runtime secret injection over plaintext files when possible.
+- If you use `.env` for local development, keep it local, gitignored, permission-restricted, and outside shared/synced folders.
+- Rotate any key immediately if exposure is suspected.
+
+### Current security controls in this repo
+
+- `register-stealth-keys` writes generated keys locally and does not return private keys in MCP output.
+- `scan-announcements` and `claim-stealth-payment` use env-only recipient key paths; key-bearing inputs are not part of tool schemas.
+- Derived stealth private keys are used server-side for claim execution and are never returned to agent/client output.
+- `derive-stealth-key` and `withdraw-from-stealth` are not registered MCP tools.
+
+### Operational recommendations
+
+- Use dedicated low-fund operational wallets, not personal main wallets.
+- Do not run `DEBUG=true` test flows with real funds/keys.
+- Treat logs, chat history, shell history, and screenshots as sensitive channels.
 
 ### Add to Claude Code
 
@@ -341,6 +361,7 @@ These scripts are not part of the production server and are not committed.
 ## Future improvements
 
 - Add ERC-4337/paymaster withdrawal flow so stealth accounts can move token-only balances without pre-funding native gas.
+- Add policy-based spend/risk controls for agent-initiated actions (per-tx caps, daily limits, token/chain allowlists, destination allowlists), either through Account Abstraction controls or directly in MCP.
 - Add `send-stealth-payment` mode for unsigned payload generation (`build_unsigned_tx`) in addition to direct execution.
 - Improve scan performance/reliability with indexed backends (subgraph/indexer) and rate-limit-aware pagination.
 - Complete Umbra SDK integration path where it improves maintainability without breaking current ERC-5564/6538 behavior.
