@@ -1,5 +1,13 @@
 # Documentation Changelog
 
+## v0.15.0 - 2026-03-22T06:52:40+01:00
+
+- Reworked the README opening section with explicit hackathon context and official event links.
+- Added a clearer problem framing for contextual agentic payments and privacy limits of reusable public addresses.
+- Expanded solution overview with concise definitions of MCP and stealth addresses.
+- Added explicit differentiation versus Umbra/Fluidkey (agent interface + ENS payment-context routing scope).
+- Added concrete user-facing use cases for AI assistants, ops bots, checkout flows, and DAO/grant disbursements.
+
 ## v0.14.0 - 2026-03-21T18:12:37+01:00
 
 - Added deployment re-check automation via `npm run check:deployments` (`scripts/check-deployments.mjs`).

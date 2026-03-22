@@ -1,6 +1,55 @@
 # StealthPay MCP
 
-MCP server that gives AI agents the ability to make private payments using ENS identity and stealth addresses.
+StealthPay MCP is a hackathon project built for:
+
+- [BSA EPFL Hackathon](https://hackathon.bsaepfl.com/)
+- [DoraHacks - BSA Stablecoins & Payments Track](https://dorahacks.io/hackathon/bsa-stablecoins-payments/detail)
+
+It is an MCP server that gives AI agents the ability to make contextual, private crypto payments using ENS identity and stealth addresses.
+
+## Problem
+
+Agentic crypto payments are still not contextual enough:
+
+1. An agent may know the recipient identity, but not their payment preferences (chain, token, UX constraints).
+2. ENS identity is human-readable, but often not structured as machine-usable payment instructions.
+3. Reusing one public address for many receipts creates onchain correlation and harms privacy.
+
+StealthPay targets this double problem: smarter machine-readable payment routing, plus private receiving with one-time stealth addresses.
+
+## Solution
+
+StealthPay MCP turns an ENS name into a machine-usable payment endpoint:
+
+- reads recipient payment preferences from ENS-based profile data
+- builds the payment path for the right chain/token context
+- uses stealth-address flow (ERC-5564-style announcements) for private receipt discovery
+
+### What is MCP?
+
+MCP (Model Context Protocol) is a standard way for AI clients/agents to call external tools.  
+In this project, MCP tools expose payment capabilities (`get-payment-profile`, `send-stealth-payment`, `scan-announcements`, `claim-stealth-payment`) in a structured, automatable interface.
+
+### What is a stealth address?
+
+A stealth address is a one-time recipient address derived from a published stealth meta-address.  
+Each payment can use a fresh address, so receipts are harder to correlate publicly while still being recoverable by the intended recipient.
+
+## How StealthPay differs from Umbra / Fluidkey
+
+StealthPay is not trying to replace those products. It focuses on a different layer:
+
+1. **Agent-first integration**: MCP tool interface for AI/native automation flows.
+2. **ENS-driven payment context**: recipient preferences are part of routing logic, not just identity resolution.
+3. **End-to-end machine flow**: resolve identity -> generate stealth destination -> pay -> scan -> claim, from one MCP surface.
+4. **Security posture for AI usage**: recipient claiming is designed around env-based keys, avoiding private-key exposure in prompt/tool inputs.
+
+## Example use cases
+
+- AI assistant pays a freelancer from a plain request: "Send 50 USDC to alice.eth privately."
+- Operations bot executes recurring payouts to contributors while preserving recipient privacy.
+- Checkout/commerce assistant generates ENS-based private payment links for one-off customer settlements.
+- DAO/grant tooling sends disbursements with identity-level routing and reduced receipt linkage.
 
 Send crypto to anyone with an ENS name — privately. The recipient's address is never reused or publicly linked to their identity.
 
