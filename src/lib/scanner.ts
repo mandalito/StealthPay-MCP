@@ -87,52 +87,61 @@ export async function scanAnnouncements(params: ScanParams): Promise<StealthPaym
     }
 
     for (const log of logs) {
-      const ephemeralPubKey = log.args.ephemeralPubKey as `0x${string}`;
-      const metadata = log.args.metadata as `0x${string}`;
-      const stealthAddress = log.args.stealthAddress as `0x${string}`;
+      try {
+        const ephemeralPubKey = log.args.ephemeralPubKey as `0x${string}`;
+        const metadata = log.args.metadata as `0x${string}`;
+        const stealthAddress = log.args.stealthAddress as `0x${string}`;
 
-      if (!ephemeralPubKey || !stealthAddress) continue;
+        if (!ephemeralPubKey || !stealthAddress) continue;
 
-      // Extract view tag from metadata (first byte after 0x)
-      const announcedViewTag = metadata && metadata.length >= 4
-        ? `0x${metadata.slice(2, 4)}` as `0x${string}`
-        : '0x00' as `0x${string}`;
+        // Skip obviously malformed ephemeral keys (must be 33 or 65 bytes)
+        const ephKeyLen = (ephemeralPubKey.length - 2) / 2;
+        if (ephKeyLen !== 33 && ephKeyLen !== 65) continue;
 
-      // Quick view tag filter: compute our view tag from ECDH
-      const sharedSecretCompressed = getSharedSecret(
-        hexToBytes(params.viewingPrivateKey),
-        hexToBytes(ephemeralPubKey)
-      );
-      const sharedSecretX = sharedSecretCompressed.slice(1);
-      const hashedSecret = keccak256(sharedSecretX);
-      const computedViewTag = `0x${hashedSecret.slice(2, 4)}`;
+        // Extract view tag from metadata (first byte after 0x)
+        const announcedViewTag = metadata && metadata.length >= 4
+          ? `0x${metadata.slice(2, 4)}` as `0x${string}`
+          : '0x00' as `0x${string}`;
 
-      if (computedViewTag !== announcedViewTag) continue;
+        // Quick view tag filter: compute our view tag from ECDH
+        const sharedSecretCompressed = getSharedSecret(
+          hexToBytes(params.viewingPrivateKey),
+          hexToBytes(ephemeralPubKey)
+        );
+        const sharedSecretX = sharedSecretCompressed.slice(1);
+        const hashedSecret = keccak256(sharedSecretX);
+        const computedViewTag = `0x${hashedSecret.slice(2, 4)}`;
 
-      // View tag matched — do the full address check
-      const isOurs = checkStealthAddress({
-        ephemeralPublicKey: ephemeralPubKey,
-        spendingPublicKey: params.spendingPublicKey,
-        viewingPrivateKey: params.viewingPrivateKey,
-        userStealthAddress: stealthAddress,
-        viewTag: announcedViewTag,
-      });
+        if (computedViewTag !== announcedViewTag) continue;
 
-      if (!isOurs) continue;
+        // View tag matched — do the full address check
+        const isOurs = checkStealthAddress({
+          ephemeralPublicKey: ephemeralPubKey,
+          spendingPublicKey: params.spendingPublicKey,
+          viewingPrivateKey: params.viewingPrivateKey,
+          userStealthAddress: stealthAddress,
+          viewTag: announcedViewTag,
+        });
 
-      // Decode metadata: viewTag (1) + selector (4) + tokenAddress (20) + amount (32) + memo (variable)
-      const { token, amount, memo } = decodeMetadata(metadata);
+        if (!isOurs) continue;
 
-      results.push({
-        stealthAddress,
-        ephemeralPublicKey: ephemeralPubKey,
-        viewTag: announcedViewTag,
-        token,
-        amount,
-        memo,
-        blockNumber: log.blockNumber,
-        txHash: log.transactionHash,
-      });
+        // Decode metadata: viewTag (1) + selector (4) + tokenAddress (20) + amount (32) + memo (variable)
+        const { token, amount, memo } = decodeMetadata(metadata);
+
+        results.push({
+          stealthAddress,
+          ephemeralPublicKey: ephemeralPubKey,
+          viewTag: announcedViewTag,
+          token,
+          amount,
+          memo,
+          blockNumber: log.blockNumber,
+          txHash: log.transactionHash,
+        });
+      } catch {
+        // Skip malformed announcements (bad ephemeral key, etc.)
+        continue;
+      }
     }
   }
 
